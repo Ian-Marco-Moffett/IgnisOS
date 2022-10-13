@@ -1,0 +1,2 @@
+qemu-system-x86_64 --enable-kvm -cpu host -M q35 -m 3G -drive file=Alevone.iso -boot d -monitor stdio -serial telnet:localhost:4321,server,nowait -smp 4 -rtc base=localtime -audiodev pa,id=audio0 -machine pcspk-audiodev=audio0
+# qemu-system-x86_64 -d int -M q35 -m 3G -drive file=Alevone.iso -boot d -monitor stdio -serial telnet:localhost:4321,server,nowait -smp 4 -rtc base=localtime -audiodev pa,id=audio0 -machine pcspk-audiodev=audio0
