@@ -30,7 +30,7 @@ then
   cd bfiles/; cmake -DAARCH64=1 ../ $@; make || failure
   cd ../
   bash scripts/mkiso.sh
-  rm -rf bfiles isoroot
+  rm -rf bfiles isoroot limine
   exit
 else
   cd bfiles/; cmake ../ $@; make || failure
