@@ -18,4 +18,4 @@ Install the same stuff needed for an x86 build but add:
 <br>
 
 Now edit tools/build.sh and change the AARCH64 variable on the top
-from ``false`` to ``true``, save and exit and do bash build.sh
+from ``false`` to ``true``, save and exit and do ``bash tools/build.sh``
