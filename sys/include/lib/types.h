@@ -1,6 +1,10 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
+#define NULL (void*)0ULL
+#define true 1
+#define false 0
+
 #if defined(__x86_64__) || defined(__aarch64__)
 typedef unsigned long long size_t;
 typedef signed long long ssize_t;
@@ -18,6 +22,6 @@ typedef signed short int16_t;
 typedef unsigned char uint8_t;
 typedef signed char int8_t;
 typedef unsigned long long uint64_t;
-
+typedef uint8_t bool;
 
 #endif
