@@ -13,7 +13,7 @@ Install the following:
 Now do ``bash build.sh``
 
 
-## Building for aarch64
+## Building for aarch64 (WORK IN PROGRESS, USE X86 INSTEAD)
 Install the same stuff needed for an x86 build but add:
 - aarch-elf-gcc
 - aarch-elf-as
