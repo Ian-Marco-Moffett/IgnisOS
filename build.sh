@@ -1,3 +1,5 @@
+AARCH64=false
+
 failure() {
   echo -e "\n\nFIX YOUR ERRORS DUDE!\n"
   cd ../
@@ -11,10 +13,30 @@ mkinitrd() {
   mv initrd/ meta/
 }
 
+firmware() {
+  mkdir -p meta/firmware
+	cd meta/firmware && curl -f -o OVMF-AA64.zip https://efi.akeo.ie/OVMF/OVMF-AA64.zip && unzip -f OVMF-AA64.zip
+	rm meta/firmware/readme.txt &&	rm meta/firmware/OVMF-AA64.zip
+  cd ../../
+}
+
+
 mkdir -p meta/internals/
 mkdir -p meta/initrd/
 mkdir -p bfiles/
-cd bfiles/; cmake ../ $@; make || failure
+if [ $AARCH64 = true ]
+then
+  firmware
+  cd bfiles/; cmake -DAARCH64=1 ../ $@; make || failure
+  cd ../
+  bash scripts/mkiso.sh
+  rm -rf bfiles isoroot
+  exit
+else
+  cd bfiles/; cmake ../ $@; make || failure
+fi
+
+
 cd ../
 rm -rf bfiles
 git clone https://github.com/limine-bootloader/limine.git --branch=v3.0-branch-binary --depth=1
