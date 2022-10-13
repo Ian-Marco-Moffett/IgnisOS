@@ -26,6 +26,7 @@ mkdir -p meta/initrd/
 mkdir -p bfiles/
 if [ $AARCH64 = true ]
 then
+  export ASM="aarch64-elf-as"
   firmware
   cd bfiles/; cmake -DAARCH64=1 ../ $@; make || failure
   cd ../
@@ -33,6 +34,7 @@ then
   rm -rf bfiles isoroot limine
   exit
 else
+  export ASM="nasm -felf64"
   cd bfiles/; cmake ../ $@; make || failure
 fi
 
