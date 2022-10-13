@@ -10,7 +10,7 @@ mkdir -p iso_root/Ignis
  
 # Copy the relevant files over.
 cp kernel/kernel.sys meta/internals/* iso_root/Ignis/
-cp -v meta/limine.cfg limine/limine.sys \
+cp -v etc/limine.cfg limine/limine.sys \
       limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
  
 # Create the bootable ISO.

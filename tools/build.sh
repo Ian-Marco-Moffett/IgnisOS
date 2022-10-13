@@ -14,9 +14,9 @@ mkinitrd() {
 }
 
 firmware() {
-  mkdir -p meta/firmware
-	cd meta/firmware && curl -f -o OVMF-AA64.zip https://efi.akeo.ie/OVMF/OVMF-AA64.zip && unzip -f OVMF-AA64.zip
-	rm meta/firmware/readme.txt &&	rm meta/firmware/OVMF-AA64.zip
+  mkdir -p sbin/ovmf
+	cd sbin/ovmf && curl -f -o OVMF-AA64.zip https://efi.akeo.ie/OVMF/OVMF-AA64.zip && unzip -f OVMF-AA64.zip
+	rm sbin/ovmf/readme.txt &&	rm sbin/ovmf/OVMF-AA64.zip
   cd ../../
 }
 
@@ -30,7 +30,7 @@ then
   firmware
   cd bfiles/; cmake -DAARCH64=1 ../ $@; make || failure
   cd ../
-  bash scripts/mkiso.sh
+  bash tools/mkiso.sh
   rm -rf bfiles iso_root limine
   exit
 else
@@ -46,9 +46,9 @@ make -C limine
 rm -rf iso_root
 mkdir -p iso_root
 mkdir -p iso_root/Ignis
-cp meta/limine.cfg \
+cp etc/limine.cfg \
 limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
-cp kernel/kernel.sys meta/internals/* iso_root/Ignis/
+cp sys/kernel.sys meta/internals/* iso_root/Ignis/
 xorriso -as mkisofs -b limine-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot limine-cd-efi.bin \
