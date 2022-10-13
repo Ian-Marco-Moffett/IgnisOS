@@ -7,7 +7,8 @@ static volatile struct limine_framebuffer_request framebuf_req = {
   .revision = 0
 };
 
-struct Font {
+
+static struct Font {
   uint32_t width;
   uint32_t height;
   uint16_t* data;
