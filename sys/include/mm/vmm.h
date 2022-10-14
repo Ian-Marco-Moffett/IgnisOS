@@ -25,5 +25,6 @@ void vmm_init(void);
 #define PAGE_SIZE 0x1000
 #define ALIGN_DOWN(address, align)  ((address) & ~((align)-1))
 #define ALIGN_UP(address, align)    (((address) + (align)-1) & ~((align)-1))
+#define PAGE_ALIGN(address) (ALIGN_DOWN(address, PAGE_SIZE))
 
 #endif

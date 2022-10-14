@@ -49,6 +49,11 @@ uintptr_t pmm_alloc_frame(void) {
 }
 
 
+void pmm_free_frame(uintptr_t frame) {
+  _bitmap_unset_bit(frame/PAGE_SIZE);
+}
+
+
 void pmm_init(void) {
   struct limine_memmap_response* mmap = mmap_req.response;
 
