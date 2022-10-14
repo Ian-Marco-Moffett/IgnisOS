@@ -7,7 +7,7 @@
 #define EXTRACT_FG(color) ((uint64_t)color >> 32)
 #define EXTRACT_BG(color) (color & 0xFFFFFFFF)
 
-static uint32_t x = 10, y = 50;
+static uint32_t x = 0, y = 0;
 
 
 static uint32_t _reset_pos(void) {
