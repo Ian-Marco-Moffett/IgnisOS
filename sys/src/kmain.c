@@ -22,6 +22,9 @@ void _start(void) {
   framebuffer_init();
   printk(RELEASE_TITLE);
 
+  intr_init();
+  printk("[INFO]: Loaded interrupt service routines.\n");
+
   init_memory_managers();
   printk("[INFO]: Memory managers initialized.\n");
   while (1);
