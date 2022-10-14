@@ -3,10 +3,16 @@
 #include <drivers/video/framebuffer.h>
 #include <intr/init.h>
 #include <mm/pmm.h>
+#include <mm/vmm.h>
 
 #ifdef __x86_64__
 #include <arch/x64/idt.h>
 #endif
+
+static void init_memory_managers(void) {
+  pmm_init();
+  vmm_init();
+}
 
 void _start(void) {
 #ifdef __x86_64__
@@ -14,8 +20,9 @@ void _start(void) {
 #endif
  
   framebuffer_init();
-  intr_init();
-  pmm_init();
   printk(RELEASE_TITLE);
+
+  init_memory_managers();
+  printk("[INFO]: Memory managers initialized.\n");
   while (1);
 }

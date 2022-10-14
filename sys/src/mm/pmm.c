@@ -22,8 +22,30 @@ static size_t bitmap_size = 0;
 static uintptr_t highest_addr = 0;
 
 
-static inline void _bitmap_unset_bit(uint8_t bit) {
+static inline void _bitmap_unset_bit(size_t bit) {
   bitmap[bit / 8] &= ~(1 << (bit % 8));
+}
+
+
+static inline void _bitmap_set_bit(size_t bit) {
+  bitmap[bit / 8] &= ~(1 << (bit % 8));
+}
+
+
+static size_t _bitmap_test(size_t bit) {
+  return bitmap[bit/8] & (1 << (bit % 8));
+}
+
+
+uintptr_t pmm_alloc_frame(void) {
+  for (size_t bit = 0; bit < bitmap_size; ++bit) {
+    if (!(_bitmap_test(bit))) {
+      _bitmap_set_bit(bit);
+      return PAGE_SIZE*bit;
+    }
+  }
+
+  return 0;
 }
 
 
