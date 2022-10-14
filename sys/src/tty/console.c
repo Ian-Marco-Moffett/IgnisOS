@@ -10,14 +10,25 @@
 static uint32_t x = 0, y = 0;
 
 
-static uint32_t _reset_pos(void) {
+static uint32_t reset_pos(void) {
   x = 0;
   y = 0;
 }
 
 
-static void _putstr(const char* str, uint64_t color) {
+static void newline(void) {
+  y += FONT_HEIGHT+4;
+  x = 0;
+}
+
+
+static void putstr(const char* str, uint64_t color) {
   for (size_t i = 0; i < kstrlen(str); ++i) {
+    if (str[i] == '\n') {
+      newline();
+      continue;
+    }
+
     framebuffer_putch(x, y, str[i], EXTRACT_BG(color), EXTRACT_FG(color));
     x += FONT_WIDTH;
   }
@@ -29,7 +40,7 @@ void console_write(const char* fmt, va_list ap) {
 
   if (*fmt == '\\' && *(fmt + 1) == '1') {
     framebuffer_clear(0x1434A4);
-    _reset_pos();
+    reset_pos();
     color = MAKE_FG_BG(0xFFFFFF, 0x1434A4);
     fmt += 2;
   }
@@ -38,17 +49,17 @@ void console_write(const char* fmt, va_list ap) {
     if (*ptr == '%') {
       switch (*ptr) {
         case 'd':
-          _putstr(dec2str(va_arg(ap, uint64_t)), color);
+          putstr(dec2str(va_arg(ap, uint64_t)), color);
           break;
         case 'x':
-          _putstr(hex2str(va_arg(ap, uint64_t)), color);
+          putstr(hex2str(va_arg(ap, uint64_t)), color);
           break;
         case 'c':
-          _putstr((char[2]){va_arg(ap, int), 0}, color);
+          putstr((char[2]){va_arg(ap, int), 0}, color);
           break;
       }
     } else {
-      _putstr((char[2]){*ptr, 0}, color);
+      putstr((char[2]){*ptr, 0}, color);
     }
   }
 }
