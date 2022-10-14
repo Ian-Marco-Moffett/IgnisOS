@@ -1,6 +1,5 @@
 #include <arch/x64/idt.h>
 #include <lib/asm.h>
-#include <lib/types.h>
 
 #ifdef __x86_64__
 typedef struct {

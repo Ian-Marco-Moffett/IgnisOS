@@ -1,5 +1,4 @@
 #include <drivers/video/framebuffer.h>
-#include <lib/font.h>
 #include <lib/limine.h>
 
 static volatile struct limine_framebuffer_request framebuf_req = {
@@ -19,10 +18,10 @@ static struct Font {
 };
 
 
-static struct limine_framebuffer* framebuffer;
+static struct limine_framebuffer* framebuffer = NULL;
 
 static uint32_t _framebuffer_get_index(uint32_t x, uint32_t y) {
-  return x * y / (framebuffer->pitch/4);
+  return x + y * (framebuffer->pitch/4);
 }
 
 
@@ -42,6 +41,15 @@ void framebuffer_putch(uint32_t x, uint32_t y, char c, uint32_t bg, uint32_t fg)
 }
 
 
-void framebuffer_init(void) {
+void framebuffer_clear(uint32_t color) {
+  for (uint32_t y = 0; y < framebuffer->height; ++y) {
+    for (uint32_t x = 0; x < framebuffer->pitch; ++x) {
+      framebuffer_putpix(x, y, color);
+    }
+  }
+}
+
+
+void framebuffer_init(void) { 
   framebuffer = framebuf_req.response->framebuffers[0];
 }

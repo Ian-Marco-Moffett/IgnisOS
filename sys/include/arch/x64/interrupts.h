@@ -1,6 +1,8 @@
 #ifndef INTERRUPT_H_
 #define INTERRUPT_H_
 
+#include <lib/types.h>
+
 #ifdef __x86_64__
 
 void register_trap(uint8_t vector, void(*isr)(void));

@@ -1,4 +1,5 @@
-#include <lib/types.h>
+// #include <lib/types.h>
+#include <lib/log.h>
 #include <drivers/video/framebuffer.h>
 
 #ifdef __x86_64__
@@ -7,9 +8,10 @@
 
 void _start(void) {
 #ifdef __x86_64__
-  load_idt();
+  // load_idt();
 #endif
-
+ 
   framebuffer_init();
+  printk("Hello, World!\n");
   while (1);
 }
