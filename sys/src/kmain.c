@@ -1,5 +1,5 @@
-// #include <lib/types.h>
 #include <lib/log.h>
+#include <lib/release.h>
 #include <drivers/video/framebuffer.h>
 #include <intr/init.h>
 #include <mm/pmm.h>
@@ -16,6 +16,6 @@ void _start(void) {
   framebuffer_init();
   intr_init();
   pmm_init();
-  printk("Hello, World!\n");
+  printk(RELEASE_TITLE);
   while (1);
 }
