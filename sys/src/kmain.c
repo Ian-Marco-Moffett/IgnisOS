@@ -4,6 +4,7 @@
 #include <intr/init.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
+#include <mm/mmap.h>
 
 #ifdef __x86_64__
 #include <arch/x64/idt.h>
@@ -27,5 +28,6 @@ void _start(void) {
 
   init_memory_managers();
   printk("[INFO]: Memory managers initialized.\n");
+
   while (1);
 }

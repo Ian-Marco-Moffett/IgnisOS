@@ -2,6 +2,7 @@
 #define VMM_H_
 
 #include <lib/types.h>
+#include <lib/limine.h>
 
 #define PTE_ADDR_MASK 0x000FFFFFFFFFF000
 #define PTE_PRESENT (1ull << 0)

@@ -15,9 +15,22 @@ static inline void __tlb_flush_single(uintptr_t virt) {
   ASMV("invlpg (%0)" :: "r" (virt) : "memory");
 }
 
+
+static PAGEMAP* _init_make_pml4(void) {
+  PAGEMAP* new_pagemap = (PAGEMAP*)pmm_alloc_frame();
+
+  for (size_t i = 0; i < 512; ++i) {
+    new_pagemap[i] = ((PAGEMAP*)root_pagemap)[i];
+  }
+
+  return new_pagemap;
+}
+
+
 static PAGEMAP* _get_next_level(PAGEMAP* top_level, uint64_t index) {
+
   if ((top_level[index] & PTE_PRESENT)) {
-    return ((uintptr_t*)PTE_GET_ADDR(top_level[index]) + VMM_HIGHER_HALF);
+    return ((uintptr_t*)PTE_GET_ADDR(top_level[index]));
   }
 
   /*
@@ -34,7 +47,7 @@ static PAGEMAP* _get_next_level(PAGEMAP* top_level, uint64_t index) {
    *
    */
   top_level[index] = (uintptr_t)next_level | PTE_PRESENT | PTE_WRITABLE;
-  return (PAGEMAP*)next_level + VMM_HIGHER_HALF;      // Return the virtual address.
+  return (PAGEMAP*)next_level;
 }
 
 
@@ -45,8 +58,8 @@ void vmm_map_page(PAGEMAP* pml4, uintptr_t phys, uintptr_t virt, size_t flags) {
   size_t index2 = (virt & ((size_t)0x1FF << 21)) >> 21;
   size_t index1 = (virt & ((size_t)0x1FF << 12)) >> 12;
 
-  uintptr_t* pml3 = _get_next_level(pml4, index4);
-  
+  uintptr_t* pml3 = _get_next_level(pml4, index4);  
+
   if (pml3 == NULL)
     return;
 
@@ -59,7 +72,7 @@ void vmm_map_page(PAGEMAP* pml4, uintptr_t phys, uintptr_t virt, size_t flags) {
 
   if (page_table == NULL)
     return;
-
+  
   page_table[index1] = phys | flags;
   __tlb_flush_single(virt);
 }
@@ -119,4 +132,5 @@ uintptr_t vmm_get_phys(PAGEMAP* pml4, uintptr_t virt) {
 
 void vmm_init(void) {
   ASMV("mov %%cr3, %0" : "=r" (root_pagemap) :: "memory");
+  root_pagemap = (PAGEMAP)_init_make_pml4();
 }

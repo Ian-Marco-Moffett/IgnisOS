@@ -18,7 +18,7 @@ errno_t mmap(void* virt, mmap_prot_t prot) {
   if (!(prot & PROT_EXEC))
     pte_flags |= PTE_NX;
 
-  if (prot & PTE_WRITABLE)
+  if (prot & PROT_WRITE)
     pte_flags |= PTE_WRITABLE;
 
   if (prot & PROT_READ)
@@ -30,7 +30,7 @@ errno_t mmap(void* virt, mmap_prot_t prot) {
     return -ENOMEM;
   }
 
-  vmm_map_page(top_level, pmm_alloc_frame(), PAGE_ALIGN((uintptr_t)virt), pte_flags);
+  vmm_map_page(top_level, phys, PAGE_ALIGN((uintptr_t)virt), pte_flags);
   return 0;
 }
 

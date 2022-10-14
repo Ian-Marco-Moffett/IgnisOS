@@ -38,9 +38,10 @@ static size_t _bitmap_test(size_t bit) {
 
 
 uintptr_t pmm_alloc_frame(void) {
-  for (size_t bit = 0; bit < bitmap_size; ++bit) {
+  for (size_t bit = 0; bit < bitmap_size*8; ++bit) {
     if (!(_bitmap_test(bit))) {
       _bitmap_set_bit(bit);
+      kmemzero(((void*)(PAGE_SIZE*bit)), PAGE_SIZE);
       return PAGE_SIZE*bit;
     }
   }
