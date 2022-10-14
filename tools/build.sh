@@ -9,7 +9,9 @@ failure() {
 
 mkinitrd() {
   mv meta/initrd/ ./
-  tar -cvf meta/internals/initrd.sys initrd/
+  cd initrd/
+  tar -cvf ../meta/internals/initrd.sys *
+  cd ../
   mv initrd/ meta/
 }
 
@@ -21,6 +23,7 @@ firmware() {
 }
 
 
+mkinitrd
 mkdir -p meta/internals/
 mkdir -p meta/initrd/
 mkdir -p bfiles/
