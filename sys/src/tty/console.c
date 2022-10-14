@@ -10,7 +10,7 @@
 static uint32_t x = 0, y = 0;
 
 
-static uint32_t reset_pos(void) {
+static void reset_pos(void) {
   x = 0;
   y = 0;
 }
