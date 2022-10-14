@@ -47,6 +47,7 @@ void console_write(const char* fmt, va_list ap) {
 
   for (const char* ptr = fmt; *ptr; ++ptr) {
     if (*ptr == '%') {
+      ++ptr;
       switch (*ptr) {
         case 'd':
           putstr(dec2str(va_arg(ap, uint64_t)), color);
