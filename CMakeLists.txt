@@ -1,4 +1,4 @@
-project(AlevoneOS C ASM)
+project(IgnisOS C ASM)
 enable_language(ASM)
 cmake_minimum_required(VERSION 3.0)
 
