@@ -18,7 +18,6 @@ typedef union header {
 
 
 static header_t* head, *tail;
-static header_t* cache = NULL;
 
 
 static header_t* get_free_block(size_t size) {
