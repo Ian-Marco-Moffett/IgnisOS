@@ -11,7 +11,7 @@ static PAGEMAP get_pagemap(void) {
 }
 
 
-errno_t mmap(void* virt, mmap_prot_t prot) {
+errno_t mmap(void* virt, size_t n_pages, mmap_prot_t prot) {
   PAGEMAP* top_level = (PAGEMAP*)get_pagemap();
   size_t pte_flags = 0;
 
@@ -24,13 +24,16 @@ errno_t mmap(void* virt, mmap_prot_t prot) {
   if (prot & PROT_READ)
     pte_flags |= PTE_PRESENT;
 
-  uint64_t phys = pmm_alloc_frame();
+  for (uint32_t i = 0; i < n_pages; ++i) {
+    uint64_t phys = pmm_alloc_frame();
 
-  if (phys == 0) {
-    return -ENOMEM;
+    if (phys == 0) {
+      return -ENOMEM;
+    }
+
+    vmm_map_page(top_level, phys, PAGE_ALIGN((uintptr_t)virt), pte_flags);
+    virt += PAGE_SIZE;
   }
-
-  vmm_map_page(top_level, phys, PAGE_ALIGN((uintptr_t)virt), pte_flags);
   return 0;
 }
 

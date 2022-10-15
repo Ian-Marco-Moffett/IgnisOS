@@ -4,7 +4,9 @@
 #include <intr/init.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
-#include <mm/mmap.h>
+#include <mm/heap.h>
+
+#define KHEAP_START 0x1000
 
 #ifdef __x86_64__
 #include <arch/x64/idt.h>
@@ -13,6 +15,7 @@
 static void init_memory_managers(void) {
   pmm_init();
   vmm_init();
+  create_heap(KHEAP_START, 2);
 }
 
 void _start(void) {
@@ -28,6 +31,6 @@ void _start(void) {
 
   init_memory_managers();
   printk("[INFO]: Memory managers initialized.\n");
-
+  
   while (1);
 }
