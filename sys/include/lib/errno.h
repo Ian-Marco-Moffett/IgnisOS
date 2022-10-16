@@ -5,7 +5,11 @@
 
 
 enum {
-  ENOMEM = 1,
+  EXIT_SUCCESS = 0,
+  EXIT_FAILURE = 1,
+  ENOMEM = 2,
+  EBUSY = 3,
+  ENOENT = 4,
 };
 
 typedef int16_t errno_t;

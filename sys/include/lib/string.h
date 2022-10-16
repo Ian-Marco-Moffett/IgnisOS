@@ -14,6 +14,8 @@ void kmemset(void* ptr, uint64_t data, size_t n);
 uint8_t kstrcmp(const char* str1, const char* str2);
 uint8_t kstrncmp(const char* str1, const char* str2, size_t n);
 uint64_t hex2int(char* hex, size_t len);
+void utf8_strncpy(const wchar_t* src, wchar_t* dst, size_t n);
+size_t utf8_strlen(const wchar_t* utf8_str);
 
 
 #endif // STRING_H_

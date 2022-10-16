@@ -28,7 +28,7 @@ static inline void _bitmap_unset_bit(size_t bit) {
 
 
 static inline void _bitmap_set_bit(size_t bit) {
-  bitmap[bit / 8] &= ~(1 << (bit % 8));
+  bitmap[bit / 8] |= (1 << (bit % 8));
 }
 
 

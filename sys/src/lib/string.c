@@ -179,3 +179,15 @@ uint64_t hex2int(char* hex, size_t len) {
     }
     return val;
 }
+
+size_t utf8_strlen(const wchar_t* utf8_str) {
+  size_t len = 0;
+  while (utf8_str[len++]);
+  return len - 1;
+}
+
+void utf8_strncpy(const wchar_t* src, wchar_t* dst, size_t n) {
+  for (size_t i = 0; i < n; ++i) {
+    dst[i] = src[i];
+  }
+}
