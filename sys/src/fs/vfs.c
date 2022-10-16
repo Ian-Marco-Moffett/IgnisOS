@@ -174,6 +174,11 @@ errno_t fread(FILE* fp, char* buf, size_t len) {
   return fp->read(fp, buf, len);
 }
 
+
+errno_t fwrite(FILE* fp, const char* buf, size_t len, char mode) {
+  return fp->write(fp, buf, len, mode);
+}
+
 errno_t fcreate(const char* path) {
   FILE* unused;
   return parse_path(path, &unused, &unused, 1);

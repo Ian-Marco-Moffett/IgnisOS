@@ -18,7 +18,7 @@
 static void init_memory_managers(void) {
   pmm_init();
   vmm_init();
-  create_heap(KHEAP_START, 2);
+  create_heap(KHEAP_START, 1);
 }
 
 static void fs_init(void) {
@@ -43,16 +43,18 @@ void _start(void) {
   
   
   fs_init();
-  printk("[INFO]: File systems initialized.\n");
+  printk("[INFO]: File systems initialized.\n"); 
 
-  fcreate("/tmp/eof_file");
-  FILE* fp = fopen("/tmp/eof_file");
-  ASSERT(fp != NULL, "Could not open /tmp/eof_file");
+  fcreate("/tmp/yo");
+  FILE* fp = fopen("/tmp/yo");
 
-  char buf;
-  fread(fp, &buf, 1);
-  printk("Data: %x\n", buf);
+  ASSERT(fp != NULL, "Could not open /tmp/yo");
+  fwrite(fp, "YO!", 4, 'a');
 
+  char buf[10];
+  fread(fp, buf, 4);
+
+  printk("Data: %s\n", buf);
   fclose(fp);
 
   __asm__ __volatile__("cli; hlt");

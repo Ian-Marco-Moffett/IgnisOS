@@ -56,7 +56,7 @@ typedef struct _FSNode {
   struct _FSNode* parent;
   size_t n_children;
   errno_t(*read)(struct _FSNode* _this, char* buf, size_t len);
-  errno_t(*write)(struct _FSNode* _this, const char* buf, size_t len);
+  errno_t(*write)(struct _FSNode* _this, const char* buf, size_t len, char mode);
   errno_t(*fcreate)(struct _FSNode* _this, const char* name);
 } fsnode_t;
 
@@ -68,6 +68,7 @@ void mount_filesystem(fsnode_t* fs_base);
 FILE* fopen(const char* path);
 void fclose(FILE* fp);
 errno_t fread(FILE* fp, char* buf, size_t len);
+errno_t fwrite(FILE* fp, const char* buf, size_t len, char mode);
 errno_t fcreate(const char* path);
 
 #endif

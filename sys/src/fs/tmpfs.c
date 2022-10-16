@@ -49,7 +49,48 @@ static errno_t read(struct _FSNode* _this, char* buf, size_t len) {
   return EXIT_SUCCESS;
 }
 
-static errno_t write(struct _FSNode* _this, const char* buf, size_t len) {
+static errno_t write(struct _FSNode* _this, const char* buf, size_t len, char mode) { 
+  uint8_t append = 0;
+
+  switch (mode) {
+    case 'a':
+      append = 1;
+      break;
+    case 'w':
+      break;
+    default:
+      return -EXIT_FAILURE;
+  }
+
+  /*
+   *  Reallocate file data buffer 
+   *  and append new data.
+   *
+   */
+
+  tmpfs_file_t* file = (tmpfs_file_t*)(mpool+_this->fidx);
+
+  if (!(append))
+    file->data_start = krealloc(file->data_start, (_this->len+len)*sizeof(char));
+  else
+    file->data_start = krealloc(file->data_start, (len+1)*(sizeof(char)));
+
+  size_t bufidx = 0;
+  size_t i = append ? _this->len-1 : len+1;
+  if (append) {
+    for (; i < _this->len+len; ++i, ++bufidx) {
+      file->data_start[i] = buf[bufidx];
+    } 
+  }
+
+  if (!(append)) {
+    _this->len += len;
+    file->data_start[_this->len-1] = EOF;
+  } else {
+    _this->len = len+1;
+    file->data_start[_this->len] = EOF;
+  }
+
   return EXIT_SUCCESS;
 }
 
