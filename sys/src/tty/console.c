@@ -38,11 +38,19 @@ static void putstr(const char* str, uint64_t color) {
 void console_write(const char* fmt, va_list ap) {
   uint64_t color = MAKE_FG_BG(0x808080, 0x000000);
 
-  if (*fmt == '\\' && *(fmt + 1) == '1') {
-    framebuffer_clear(0x1434A4);
-    reset_pos();
-    color = MAKE_FG_BG(0xFFFFFF, 0x1434A4);
-    fmt += 2;
+  if (*fmt == '\\') {
+    switch (*(fmt + 1)) {
+      case '1':
+        framebuffer_clear(0x1434A4);
+        reset_pos();
+        color = MAKE_FG_BG(0xFFFFFF, 0x1434A4);
+        fmt += 2;
+        break;
+      case '2':
+        color = MAKE_FG_BG(0x8B8000, 0x000000);
+        fmt += 2;
+        break;
+    }
   }
 
   for (const char* ptr = fmt; *ptr; ++ptr) {
