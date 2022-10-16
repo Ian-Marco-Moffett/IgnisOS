@@ -2,12 +2,13 @@
 #include <mm/mmap.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
-#include <lib/log.h>
+#include <lib/assert.h>
 
 #define USED 0
 #define FREE 1
 
 #define DATA_START(block_base) ((&block_base->next) + 1)
+#define MAGIC 0xCA7F00D
 
 
 
@@ -18,6 +19,7 @@
  */
 
 typedef struct _HeapBlk {
+  uint32_t magic;
   uint8_t state : 1;
   size_t bytes_allocated;
   struct _HeapBlk* next;
@@ -46,16 +48,22 @@ void create_heap(uintptr_t vaddr_start, size_t n_pages) {
   // Set all next fields.
   for (size_t i = 0; i < n_pages; ++i) {
     cur->bytes_allocated = 0;
+    cur->magic = MAGIC;
     cur->next = ++tmp;
+    cur->state = FREE;
     cur = cur->next;
   }
   
   cur->next = NULL;
+  cur->state = FREE;
   cur->bytes_allocated = 0;
+  cur->magic = MAGIC;
 }
 
 
 void* kmalloc(size_t size) { 
+  ASSERT(freelist->magic == MAGIC, "Heap corruption detected.\n");
+
   // Invalid size is bad >:(
   if (size == 0)
     return NULL;
@@ -65,11 +73,12 @@ void* kmalloc(size_t size) {
     return NULL;
 
   // Too many bytes have been allocated?
-  if (bytes_allocated/0x1000 >= heap_size_pages)
+  if (bytes_allocated >= (heap_size_pages*PAGE_SIZE)-512)
     return NULL;
 
   // Do we need the next block?
-  if (freelist->bytes_allocated >= 0x1000-1) {
+  if (freelist->bytes_allocated >= PAGE_SIZE-512 || freelist->bytes_allocated + size > PAGE_SIZE-512) {
+    freelist->state = USED;
     while (freelist != NULL) {
       if (freelist->state == FREE) {
         break;
@@ -84,5 +93,33 @@ void* kmalloc(size_t size) {
 
   char* ret = (char*)DATA_START(freelist) + freelist->bytes_allocated;
   freelist->bytes_allocated += size;
+  bytes_allocated += size;
   return ret;
 }
+
+
+void kfree(void* ptr) {
+  /*
+   *  Freeing the memory involves
+   *  taking the pointer and getting header base.
+   *
+   *  If the magic is not correct, the heap must be
+   *  corrupted and we must throw a kernel panic.
+   *
+   *  Once we have the pointer we will set header->state to FREE.
+   *  Once we set header->state to FREE we must set freelist to header.
+   *
+   *
+   */
+
+    heapblk_t* header = (heapblk_t*)PAGE_ALIGN((uintptr_t)ptr);
+
+    if (header == NULL)
+      return;
+
+    ASSERT(header->magic == MAGIC, "Heap corruption detected.\n");
+    header->state = FREE;
+    freelist = header;
+    freelist->bytes_allocated = 0;
+}
+
