@@ -10,6 +10,7 @@ enum {
   ENOMEM = 2,
   EBUSY = 3,
   ENOENT = 4,
+  ENOSPC = 5,
 };
 
 typedef int16_t errno_t;
