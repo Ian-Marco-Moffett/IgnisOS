@@ -123,3 +123,15 @@ void kfree(void* ptr) {
     freelist->bytes_allocated = 0;
 }
 
+void* krealloc(void* oldptr, size_t newsize) {
+  char* new_ptr = kmalloc(newsize);
+
+  heapblk_t* header = (heapblk_t*)PAGE_ALIGN((uintptr_t)oldptr);
+
+  for (size_t i = 0; i < newsize; ++i) {
+    new_ptr[i] = ((char*)oldptr)[i];
+  }
+
+  kfree(oldptr);
+  return new_ptr;
+}

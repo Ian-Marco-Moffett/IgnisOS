@@ -8,5 +8,7 @@
 
 void create_heap(uintptr_t vaddr_start, size_t n_pages);
 void* kmalloc(size_t size);
+void* krealloc(void* oldptr, size_t newsize);
+void kfree(void* ptr);
 
 #endif
