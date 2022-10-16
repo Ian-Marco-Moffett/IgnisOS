@@ -175,11 +175,29 @@ errno_t fread(FILE* fp, char* buf, size_t len) {
 }
 
 
-errno_t fwrite(FILE* fp, const char* buf, size_t len, char mode) {
-  return fp->write(fp, buf, len, mode);
+errno_t fwrite(FILE* fp, const char* buf, size_t len) {
+  return fp->write(fp, buf, len);
 }
 
 errno_t fcreate(const char* path) {
   FILE* unused;
   return parse_path(path, &unused, &unused, 1);
+}
+
+
+errno_t fseek(FILE* fp, size_t offset, uint32_t whence) {
+  if (offset > 0 && whence == SEEK_END) {
+    return -EXIT_FAILURE;
+  }
+
+  switch (whence) {
+    case SEEK_SET:
+      fp->fd.off = offset;
+      break;
+    case SEEK_END:
+      fp->fd.off = fp->len-1;
+      break;
+  }
+
+  return EXIT_SUCCESS;
 }

@@ -9,6 +9,9 @@
 #define FS_MOUNTPOINT (1 << 2)
 #define EOF 0x05
 
+#define SEEK_SET 0
+#define SEEK_END 1
+
 typedef uint8_t fsattr_t;
 
 
@@ -56,7 +59,7 @@ typedef struct _FSNode {
   struct _FSNode* parent;
   size_t n_children;
   errno_t(*read)(struct _FSNode* _this, char* buf, size_t len);
-  errno_t(*write)(struct _FSNode* _this, const char* buf, size_t len, char mode);
+  errno_t(*write)(struct _FSNode* _this, const char* buf, size_t len);
   errno_t(*fcreate)(struct _FSNode* _this, const char* name);
 } fsnode_t;
 
@@ -68,7 +71,8 @@ void mount_filesystem(fsnode_t* fs_base);
 FILE* fopen(const char* path);
 void fclose(FILE* fp);
 errno_t fread(FILE* fp, char* buf, size_t len);
-errno_t fwrite(FILE* fp, const char* buf, size_t len, char mode);
+errno_t fwrite(FILE* fp, const char* buf, size_t len);
+errno_t fseek(FILE* fp, size_t offset, uint32_t whence);
 errno_t fcreate(const char* path);
 
 #endif

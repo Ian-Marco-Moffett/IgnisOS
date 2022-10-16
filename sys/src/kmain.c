@@ -49,7 +49,10 @@ void _start(void) {
   FILE* fp = fopen("/tmp/yo");
 
   ASSERT(fp != NULL, "Could not open /tmp/yo");
-  fwrite(fp, "YO!", 4, 'a');
+
+  fwrite(fp, "YO!", 4);
+  fseek(fp, 0, SEEK_SET);
+  fwrite(fp, "!OY", 4);
 
   char buf[10];
   fread(fp, buf, 4);

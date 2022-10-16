@@ -35,33 +35,16 @@ static errno_t read(struct _FSNode* _this, char* buf, size_t len) {
 
   if (file == NULL) {
     return -ENOENT;
-  }
-  
-  if (_this->fd.off+len > _this->len) {
-    return -EXIT_FAILURE;
-  }
+  } 
 
-  for (size_t i = _this->fd.off; i < _this->fd.off+len; ++i) {
-    buf[i] = file->data_start[i + _this->fd.off];
+  for (size_t i = 0; i < len; ++i) {
+    buf[i] = file->data_start[i];
   }
-
 
   return EXIT_SUCCESS;
 }
 
-static errno_t write(struct _FSNode* _this, const char* buf, size_t len, char mode) { 
-  uint8_t append = 0;
-
-  switch (mode) {
-    case 'a':
-      append = 1;
-      break;
-    case 'w':
-      break;
-    default:
-      return -EXIT_FAILURE;
-  }
-
+static errno_t write(struct _FSNode* _this, const char* buf, size_t len) {  
   /*
    *  Reallocate file data buffer 
    *  and append new data.
@@ -70,27 +53,16 @@ static errno_t write(struct _FSNode* _this, const char* buf, size_t len, char mo
 
   tmpfs_file_t* file = (tmpfs_file_t*)(mpool+_this->fidx);
 
-  if (!(append))
-    file->data_start = krealloc(file->data_start, (_this->len+len)*sizeof(char));
-  else
-    file->data_start = krealloc(file->data_start, (len+1)*(sizeof(char)));
+  file->data_start = krealloc(file->data_start, ((_this->len+len)+1)*(sizeof(char)));
 
   size_t bufidx = 0;
-  size_t i = append ? _this->len-1 : len+1;
-  if (append) {
-    for (; i < _this->len+len; ++i, ++bufidx) {
-      file->data_start[i] = buf[bufidx];
-    } 
-  }
+  for (size_t i = _this->fd.off; i < _this->fd.off+len; ++i, ++bufidx) {
+    file->data_start[i] = buf[bufidx];
+  } 
 
-  if (!(append)) {
-    _this->len += len;
-    file->data_start[_this->len-1] = EOF;
-  } else {
-    _this->len = len+1;
-    file->data_start[_this->len] = EOF;
-  }
-
+  _this->fd.off += len;
+  _this->len += len;
+  file->data_start[_this->len-1] = EOF;
   return EXIT_SUCCESS;
 }
 
