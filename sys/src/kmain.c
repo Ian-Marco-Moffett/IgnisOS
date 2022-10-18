@@ -10,13 +10,14 @@
 #include <fs/tmpfs.h>
 #include <proc/proc.h>
 #include <firmware/acpi/acpi.h>
-#include <arch/x86/apic/ioapic.h>
-#include <arch/x86/apic/lapic.h>
 
 #define KHEAP_START 0x1000
 
 #ifdef __x86_64__
 #include <arch/x64/idt.h>
+#include <arch/x86/apic/ioapic.h>
+#include <arch/x86/apic/lapic.h>
+#include <drivers/serial.h>
 #endif
 
 static void init_memory_managers(void) {
@@ -41,6 +42,7 @@ static void apic_init(void) {
 void _start(void) {
 #ifdef __x86_64__
   load_idt();
+  serial_init();
 #endif
  
   framebuffer_init();
