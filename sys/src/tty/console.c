@@ -17,6 +17,10 @@ static void reset_pos(void) {
 
 
 static void newline(void) {
+  if (y >= framebuffer_get_height() - 5) {
+    framebuffer_clear(0x000000);
+  }
+
   y += FONT_HEIGHT+4;
   x = 0;
 }

@@ -50,6 +50,15 @@ void framebuffer_clear(uint32_t color) {
 }
 
 
+uint32_t framebuffer_get_height(void) {
+  return framebuffer->height;
+}
+
+uint32_t framebuffer_get_width(void) {
+  return framebuffer->width;
+}
+
+
 void framebuffer_init(void) { 
   framebuffer = framebuf_req.response->framebuffers[0];
 }
