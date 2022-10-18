@@ -40,7 +40,7 @@ static void _init(void) {
   }
 }
 
-const char* initrd_open(const char* path, size_t* size_out) {
+const char* initrd_open(const char* path) {
   if (initrd == NULL) {
     _init();
   }
