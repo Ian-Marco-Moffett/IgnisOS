@@ -18,6 +18,7 @@
 #include <arch/x86/apic/ioapic.h>
 #include <arch/x86/apic/lapic.h>
 #include <drivers/serial.h>
+#include <drivers/pit.h>
 #endif
 
 static void init_memory_managers(void) {
@@ -62,6 +63,11 @@ void _start(void) {
   printk("[INFO]: ACPI tables parsed.\n");
 
   apic_init();
+
+#ifdef __x86_64__
+  init_pit();
+  printk("[INFO]: PIT initialized.\n");
+#endif
 
   proc_init();
 
