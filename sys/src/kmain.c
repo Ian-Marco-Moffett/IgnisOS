@@ -8,6 +8,10 @@
 #include <mm/heap.h>
 #include <fs/vfs.h>
 #include <fs/tmpfs.h>
+#include <proc/proc.h>
+#include <firmware/acpi/acpi.h>
+#include <arch/x86/apic/ioapic.h>
+#include <arch/x86/apic/lapic.h>
 
 #define KHEAP_START 0x1000
 
@@ -25,6 +29,13 @@ static void fs_init(void) {
   // This shouldn't happen but if it does I'll know.
   ASSERT(vfs_init() == EXIT_SUCCESS, "Could not initialize VFS - Not enough memory\n");
   tmpfs_init();
+}
+
+static void apic_init(void) {
+  ioapic_init();
+  printk("[INFO]: I/O APIC initialized.\n");
+  lapic_init();
+  printk("[INFO]: Local APIC initialized for BSP.\n");
 }
 
 void _start(void) {
@@ -45,20 +56,12 @@ void _start(void) {
   fs_init();
   printk("[INFO]: File systems initialized.\n"); 
 
-  fcreate("/tmp/yo");
-  FILE* fp = fopen("/tmp/yo");
+  acpi_init();
+  printk("[INFO]: ACPI tables parsed.\n");
 
-  ASSERT(fp != NULL, "Could not open /tmp/yo");
+  apic_init();
 
-  fwrite(fp, "YO!", 4);
-  fseek(fp, 0, SEEK_SET);
-  fwrite(fp, "!OY", 4);
-
-  char buf[10];
-  fread(fp, buf, 4);
-
-  printk("Data: %s\n", buf);
-  fclose(fp);
+  proc_init();
 
   __asm__ __volatile__("cli; hlt");
   

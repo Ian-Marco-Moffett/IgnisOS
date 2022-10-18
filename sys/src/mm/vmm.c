@@ -16,7 +16,7 @@ static inline void __tlb_flush_single(uintptr_t virt) {
 }
 
 
-static PAGEMAP* _init_make_pml4(void) {
+PAGEMAP* vmm_make_pml4(void) {
   PAGEMAP* new_pagemap = (PAGEMAP*)pmm_alloc_frame();
 
   for (size_t i = 0; i < 512; ++i) {
@@ -132,5 +132,5 @@ uintptr_t vmm_get_phys(PAGEMAP* pml4, uintptr_t virt) {
 
 void vmm_init(void) {
   ASMV("mov %%cr3, %0" : "=r" (root_pagemap) :: "memory");
-  root_pagemap = (PAGEMAP)_init_make_pml4();
+  root_pagemap = (PAGEMAP)vmm_make_pml4();
 }
