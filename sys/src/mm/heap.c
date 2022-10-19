@@ -68,9 +68,11 @@ void* kmalloc(size_t size) {
   if (size == 0)
     return NULL;
   
-  // Allocated too much at once or the freelist is NULL?
-  if (size >= 0x1000 || freelist == NULL)
+  // Is the freelist is NULL?
+  if (freelist == NULL)
     return NULL;
+
+  uint8_t n_blocks_allocd = size/0x1000;
 
   // Too many bytes have been allocated?
   if (bytes_allocated >= (heap_size_pages*PAGE_SIZE)-512)
@@ -78,7 +80,15 @@ void* kmalloc(size_t size) {
 
   // Do we need the next block?
   if (freelist->bytes_allocated >= PAGE_SIZE-512 || freelist->bytes_allocated + size > PAGE_SIZE-512) {
-    freelist->state = USED;
+    while (n_blocks_allocd--) {
+      freelist->state = USED;
+      freelist = freelist->next;
+
+      if (freelist == NULL) {
+        return NULL;
+      }
+    }
+
     while (freelist != NULL) {
       if (freelist->state == FREE) {
         break;

@@ -67,12 +67,32 @@ void* acpi_get_lapic_base(void) {
 }
 
 
+uint16_t acpi_remap_irq(uint8_t irq) {
+  uint8_t* cur = (uint8_t*)(madt + 1);
+  uint8_t* end = (uint8_t*)madt + madt->header.length;
+
+  while (cur < end) {
+    apic_header_t* apic_header = (apic_header_t*)cur;
+    if (apic_header->type == APIC_TYPE_INTERRUPT_OVERRIDE) {
+      apic_interrupt_override_t* intr_override = (apic_interrupt_override_t*)cur;
+      if (intr_override->source == irq) {
+        return intr_override->interrupt;
+      }
+    }
+
+    cur += apic_header->length;
+  }
+  
+  return irq;
+}
+
+
 void acpi_init(void) {
   acpi_rsdp_t* rsdp = rsdp_req.response->address;
   rsdt = (acpi_rsdt_t*)(uint64_t)rsdp->rsdtaddr;
   ASSERT(do_checksum(&rsdt->header), "ACPI RSDT checkum is invalid!\n");
   rsdt_entry_count = (rsdt->header.length - sizeof(rsdt->header)) / 4;
-  
+
   // Fetch and parse MADT.
   find_madt();
   parse_madt();

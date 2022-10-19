@@ -24,7 +24,7 @@
 static void init_memory_managers(void) {
   pmm_init();
   vmm_init();
-  create_heap(KHEAP_START, 1);
+  create_heap(KHEAP_START, 3);
 }
 
 static void fs_init(void) {

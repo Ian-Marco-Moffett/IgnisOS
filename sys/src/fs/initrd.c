@@ -32,7 +32,7 @@ static size_t _getsize(const char* in) {
 }
 
 static void _init(void) {
-  initrd = get_module("/Alevone/initrd.sys", &initrd_size);
+  initrd = get_module("/Ignis/initrd.sys", &initrd_size);
 
   if (initrd == NULL) {
     printk(PRINTK_PANIC "Could not find initrd.sys!\n");

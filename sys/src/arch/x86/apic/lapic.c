@@ -70,6 +70,10 @@ static void write(uint16_t reg, uint32_t value) {
   *(volatile uint32_t*)(lapic_base + reg) = value;
 }
 
+void lapic_send_eoi(void) {
+  write(LAPIC_EOI, 0);
+}
+
 void lapic_init(void) {
   lapic_base = acpi_get_lapic_base();
 

@@ -23,10 +23,10 @@ firmware() {
 }
 
 
-mkinitrd
 mkdir -p meta/internals/
 mkdir -p meta/initrd/
 mkdir -p bfiles/
+mkinitrd
 if [ $AARCH64 = true ]
 then
   export ASM="aarch64-elf-as"

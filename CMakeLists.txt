@@ -1,5 +1,5 @@
-project(IgnisOS C ASM)
-enable_language(ASM)
+project(IgnisOS C ASM_NASM)
+enable_language(ASM_NASM)
 cmake_minimum_required(VERSION 3.0)
 
 include_directories("sys/include/")
@@ -35,3 +35,5 @@ if (AARCH64)
   set_target_properties(kernel PROPERTIES OUTPUT_NAME "${PROJECT_SOURCE_DIR}/sys/kernel.sys")
   set_target_properties(kernel PROPERTIES LINK_FLAGS "-nostdlib -zmax-page-size=0x1000 -static -T${PROJECT_SOURCE_DIR}/sys/linker-arm.ld")
 ENDIF(AARCH64)
+
+add_subdirectory(usr)
