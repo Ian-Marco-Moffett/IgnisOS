@@ -9,6 +9,7 @@
 #include <fs/vfs.h>
 #include <fs/tmpfs.h>
 #include <proc/proc.h>
+#include <proc/tss.h>
 #include <firmware/acpi/acpi.h>
 
 #define KHEAP_START 0x1000
@@ -17,6 +18,7 @@
 #include <arch/x64/idt.h>
 #include <arch/x86/apic/ioapic.h>
 #include <arch/x86/apic/lapic.h>
+#include <arch/x86/gdt.h>
 #include <drivers/serial.h>
 #include <drivers/pit.h>
 #endif
@@ -59,6 +61,14 @@ void _start(void) {
   init_memory_managers();
   printk("[INFO]: Memory managers initialized.\n"); 
   
+  write_tss();
+  printk("[INFO]: TSS initialized.\n");
+
+  load_gdt();
+  printk("[INFO]: GDT loaded.\n");
+
+  load_tss();
+  printk("[INFO]: TSS loaded.\n");
   
   fs_init();
   printk("[INFO]: File systems initialized.\n"); 
