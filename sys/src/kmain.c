@@ -49,6 +49,10 @@ void _start(void) {
   framebuffer_init();
   printk(RELEASE_TITLE);
 
+  acpi_init();
+  printk("[INFO]: ACPI tables parsed.\n");
+  apic_init();
+
   intr_init();
   printk("[INFO]: Loaded interrupt service routines.\n");
 
@@ -59,16 +63,11 @@ void _start(void) {
   fs_init();
   printk("[INFO]: File systems initialized.\n"); 
 
-  acpi_init();
-  printk("[INFO]: ACPI tables parsed.\n");
-
-  apic_init();
-
 #ifdef __x86_64__
   init_pit();
   printk("[INFO]: PIT initialized.\n");
 #endif
-
+  
   proc_init();
 
   __asm__ __volatile__("cli; hlt");
