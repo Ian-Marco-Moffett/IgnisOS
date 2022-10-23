@@ -24,6 +24,9 @@ errno_t mmap(void* virt, size_t n_pages, mmap_prot_t prot) {
   if (prot & PROT_READ)
     pte_flags |= PTE_PRESENT;
 
+  if (prot & PROT_USER)
+    pte_flags |= PTE_USER;
+
   for (uint32_t i = 0; i < n_pages; ++i) {
     uint64_t phys = pmm_alloc_frame();
 

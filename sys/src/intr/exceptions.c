@@ -75,7 +75,9 @@ _isr void __vec13(void* stackframe) {
 
 
 _isr void __vec14(void* stackframe) {
-  printk(PRINTK_PANIC "Memory access violation.\n");
+  uint64_t cr2;
+  ASMV("mov %%cr2, %0" : "=r" (cr2));
+  printk(PRINTK_PANIC "Memory access violation at %x.\n", cr2);
   INTR_END;
 }
 

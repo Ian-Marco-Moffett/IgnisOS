@@ -9,6 +9,7 @@ typedef enum {
   PROT_EXEC   =   (1 << 0),
   PROT_READ   =   (1 << 1),
   PROT_WRITE  =   (1 << 2),
+  PROT_USER   =   (1 << 3)
 } mmap_prot_t;
 
 /*

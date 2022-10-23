@@ -1,3 +1,3 @@
-__attribute__((noreturn)) void main(void) {
+void main(void) {
   while (1);
 }

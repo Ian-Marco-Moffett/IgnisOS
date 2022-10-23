@@ -7,14 +7,6 @@ failure() {
   exit
 }
 
-mkinitrd() {
-  mv meta/initrd/ ./
-  cd initrd/
-  tar -cvf ../meta/internals/initrd.sys *
-  cd ../
-  mv initrd/ meta/
-}
-
 firmware() {
   mkdir -p sbin/ovmf
 	cd sbin/ovmf && curl -f -o OVMF-AA64.zip https://efi.akeo.ie/OVMF/OVMF-AA64.zip && unzip -f OVMF-AA64.zip
@@ -26,13 +18,13 @@ firmware() {
 mkdir -p meta/internals/
 mkdir -p meta/initrd/
 mkdir -p bfiles/
-mkinitrd
 if [ $AARCH64 = true ]
 then
   export ASM="aarch64-elf-as"
   firmware
   cd bfiles/; cmake -DAARCH64=1 ../ $@; make || failure
   cd ../
+  bash tools/mkinitrd.sh
   bash tools/mkiso.sh
   rm -rf bfiles iso_root limine
   exit
@@ -44,6 +36,7 @@ fi
 
 cd ../
 rm -rf bfiles
+bash tools/mkinitrd.sh
 git clone https://github.com/limine-bootloader/limine.git --branch=v3.0-branch-binary --depth=1
 make -C limine
 rm -rf iso_root

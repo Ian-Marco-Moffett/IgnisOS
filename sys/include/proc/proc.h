@@ -17,6 +17,6 @@ typedef struct Process {
 
 
 void proc_init(void);
-
+void enter_ring3(uint64_t rip);
 
 #endif

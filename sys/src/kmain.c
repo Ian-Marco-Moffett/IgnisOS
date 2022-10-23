@@ -12,7 +12,7 @@
 #include <proc/tss.h>
 #include <firmware/acpi/acpi.h>
 
-#define KHEAP_START 0x1000
+#define KHEAP_START VMM_HIGHER_HALF + pmm_alloc_frame()
 
 #ifdef __x86_64__
 #include <arch/x64/idt.h>
@@ -26,7 +26,7 @@
 static void init_memory_managers(void) {
   pmm_init();
   vmm_init();
-  create_heap(KHEAP_START, 3);
+  create_heap(KHEAP_START, 2);
 }
 
 static void fs_init(void) {

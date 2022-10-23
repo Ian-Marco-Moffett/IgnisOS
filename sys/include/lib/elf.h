@@ -474,6 +474,6 @@ typedef struct {
 	const char* elf_ptr;
 } program_image_t;
 
-void* elf_load(const char* initrd_path, void* cr3, program_image_t* pimg);
+void* elf_load(const char* initrd_path, program_image_t* pimg);
 
 #endif

@@ -62,7 +62,7 @@ static uint8_t is_supported(Elf64_Ehdr hdr) {
 }
 
 
-void* elf_load(const char* initrd_path, void* cr3, program_image_t* pimg) {
+void* elf_load(const char* initrd_path, program_image_t* pimg) {
   const char* elf_ptr = initrd_open(initrd_path);
   const char* const ORIG_ELF_PTR = elf_ptr;
 
@@ -99,10 +99,10 @@ void* elf_load(const char* initrd_path, void* cr3, program_image_t* pimg) {
       Elf64_Addr segment = phdr->p_paddr;
 
       elf_ptr = (char*)ORIG_ELF_PTR + phdr->p_offset;
-      char* segment_ptr = (char*)segment;
+      mmap((void*)segment, n_pages, PROT_READ | PROT_WRITE | PROT_USER | PROT_EXEC);
 
       for (uint64_t i = 0; i < phdr->p_filesz; ++i) {
-        segment_ptr[i] = elf_ptr[i];
+        ((char*)segment)[i] = elf_ptr[i];
       }
     }
   }
