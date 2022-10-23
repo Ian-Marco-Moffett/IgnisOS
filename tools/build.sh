@@ -18,6 +18,9 @@ firmware() {
 mkdir -p meta/internals/
 mkdir -p meta/initrd/
 mkdir -p bfiles/
+cd usr/libc
+make
+cd ../../
 if [ $AARCH64 = true ]
 then
   export ASM="aarch64-elf-as"
