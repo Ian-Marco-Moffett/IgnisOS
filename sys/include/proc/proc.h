@@ -12,6 +12,7 @@ typedef struct Process {
   uint64_t rsp;
   uint64_t stack_base;
   uint64_t cr3;
+  uint64_t rip;
   struct Process* next;
 } process_t;
 
