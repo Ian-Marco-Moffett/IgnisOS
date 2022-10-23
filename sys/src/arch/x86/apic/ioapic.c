@@ -43,7 +43,7 @@ void ioapic_init(void) {
 
   // Mask all redirection entries.
   for (uint32_t i = 0; i < max_red_entries; ++i) {
-    ioapic_set_entry(i, 1 << 6);
+    ioapic_set_entry(i, 1 << 16);
   }
 }
 
