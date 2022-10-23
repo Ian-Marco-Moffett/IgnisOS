@@ -27,6 +27,14 @@ struct SyscallRegs {
  */
 
 void sys_conout(void) {
+  const char* str = (const char*)syscall_regs.rbx;
+
+  // I don't want it to be that easy to fake
+  // a kernel panic (seems like a silly thing to make easy).
+  if (str[0] == '\\' && str[1] == '1') {
+    return;
+  }
+
   va_list ap;
   console_write((const char*)syscall_regs.rbx, ap);
 }

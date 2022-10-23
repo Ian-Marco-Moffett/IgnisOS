@@ -54,6 +54,11 @@ void console_write(const char* fmt, va_list ap) {
         color = MAKE_FG_BG(0x8B8000, 0x000000);
         fmt += 2;
         break;
+      case '3':
+        framebuffer_clear(0x000000);
+        reset_pos();
+        color = MAKE_FG_BG(0x808080, 0x000000);
+        fmt += 2;
     }
   }
 
