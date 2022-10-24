@@ -4,6 +4,7 @@
 
 #define FRAMEBUFFER_IOCTL_ID "fb"
 #define FRAMEBUFFER_CLEARSCREEN 0
+#define FRAMEBUFFER_PUTPIX 1
 
 
 #endif

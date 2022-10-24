@@ -21,8 +21,15 @@ static struct Font {
 static struct limine_framebuffer* framebuffer = NULL;
 
 void framebuffer_ioctl(unsigned long cmd, size_t args[20]) {
-  if (cmd == FRAMEBUFFER_IOCTL_CLEAR) {
-    framebuffer_clear(args[0]);
+  switch (cmd) {
+    case FRAMEBUFFER_IOCTL_CLEAR:
+      framebuffer_clear(args[0]);
+      break;
+    case FRAMEBUFFER_IOCTL_PUTPIX:
+      if (args[0] > framebuffer_get_width()-5 || args[1] > framebuffer_get_height()-5)
+        break;
+      framebuffer_putpix(args[0], args[1], args[2]);
+      break;
   }
 }
 

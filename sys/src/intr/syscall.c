@@ -62,7 +62,7 @@ static void sys_ioctl(void) {
     return;
   }
 
-  size_t args[20] = {syscall_regs.rdx};
+  size_t args[20] = {syscall_regs.rdx, syscall_regs.rsi, syscall_regs.rdi, syscall_regs.r8, syscall_regs.r9, syscall_regs.r10};
   driver->ioctl(syscall_regs.rcx, args);
 }
 
