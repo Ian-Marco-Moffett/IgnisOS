@@ -11,4 +11,4 @@ set (CMAKE_C_FLAGS "-fno-stack-protector \
 add_executable(init_service ${CFILES})
 target_link_libraries(init_service ${PROJECT_SOURCE_DIR}/usr/libc/libignis.a)
 set_target_properties(init_service PROPERTIES OUTPUT_NAME "${PROJECT_SOURCE_DIR}/meta/initrd/initd.sys")
-set_target_properties(init_service PROPERTIES LINK_FLAGS "-nostdlib -nostdinc -zmax-page-size=0x1000 -T${CMAKE_CURRENT_SOURCE_DIR}/link.ld")
+set_target_properties(init_service PROPERTIES LINK_FLAGS "-nostdlib -nostdinc -zmax-page-size=0x1000 -T${PROJECT_SOURCE_DIR}/usr/link.ld")
