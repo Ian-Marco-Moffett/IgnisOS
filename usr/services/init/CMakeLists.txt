@@ -5,7 +5,7 @@ set (CMAKE_C_FLAGS "-fno-stack-protector \
 -fno-pic -Werror=implicit -Werror=implicit-function-declaration -Werror=implicit-int \
 -Werror=int-conversion -Wno-builtin-declaration-mismatch -no-pie \
 -Werror=incompatible-pointer-types -Werror=int-to-pointer-cast \
--nostdlib -nostdinc -I ${PROJECT_SOURCE_DIR}/usr/libc/include/")
+-nostdlib -nostdinc -I ${PROJECT_SOURCE_DIR}/etc/headerconf/ -I ${PROJECT_SOURCE_DIR}/usr/libc/include/")
 
 
 add_executable(init_service ${CFILES})
