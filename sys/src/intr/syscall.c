@@ -1,8 +1,10 @@
 #include <tty/console.h>
 #include <proc/proc.h>
 #include <lib/types.h>
+#include <uapi/uapi.h>
+#include <lib/log.h>
 
-#define MAX_SYSCALLS 2
+#define MAX_SYSCALLS 3
 
 const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
 
@@ -45,8 +47,28 @@ static void sys_initrd_load(void) {
 }
 
 
+/*
+ *  RBX: Driver ID.
+ *  RCX: Command.
+ *  
+ *
+ */
+
+static void sys_ioctl(void) {
+  driver_node_t* driver = uapi_locate_driver((const char*)syscall_regs.rbx);
+
+  if (driver == NULL) {
+    syscall_regs.rax = -1;
+    return;
+  }
+
+  size_t args[20] = {syscall_regs.rdx};
+  driver->ioctl(syscall_regs.rcx, args);
+}
+
 void(*syscall_table[MAX_SYSCALLS])(void) = {
   sys_conout,       // 0x0.
   sys_initrd_load,  // 0x1.
+  sys_ioctl,        // 0x2.
 };
 

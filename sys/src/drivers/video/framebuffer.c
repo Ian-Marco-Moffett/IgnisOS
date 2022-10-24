@@ -1,5 +1,6 @@
 #include <drivers/video/framebuffer.h>
 #include <lib/limine.h>
+#include <uapi/uapi.h>
 
 static volatile struct limine_framebuffer_request framebuf_req = {
   .id = LIMINE_FRAMEBUFFER_REQUEST,
@@ -17,8 +18,13 @@ static struct Font {
   .data = (uint16_t*)DEFAULT_FONT_DATA
 };
 
-
 static struct limine_framebuffer* framebuffer = NULL;
+
+void framebuffer_ioctl(unsigned long cmd, size_t args[20]) {
+  if (cmd == FRAMEBUFFER_IOCTL_CLEAR) {
+    framebuffer_clear(args[0]);
+  }
+}
 
 static uint32_t _framebuffer_get_index(uint32_t x, uint32_t y) {
   return x + y * (framebuffer->pitch/4);

@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <sys/syscall.h>
+#include <sys/ioctl.h>
+#include <sys/fb.h>
 #include <services.cfg.h>
 
 void main(void) {

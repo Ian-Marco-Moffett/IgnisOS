@@ -11,6 +11,7 @@
 #include <proc/proc.h>
 #include <proc/tss.h>
 #include <firmware/acpi/acpi.h>
+#include <uapi/uapi.h>
 
 #define N_HEAP_PAGES 7
 
@@ -72,6 +73,8 @@ void _start(void) {
 
   fs_init();
   printk("[INFO]: File systems initialized.\n"); 
+
+  uapi_init_builtins();
 
 #ifdef __x86_64__
   init_pit();

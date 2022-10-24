@@ -1,6 +1,6 @@
 #include <stdio.h>
 
 __attribute__((naked)) void main(void) {
-  puts(":)");
+  puts("[KESSWM]: Coming soon..\n");
   while (1);
 }
