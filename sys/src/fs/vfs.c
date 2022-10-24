@@ -63,7 +63,6 @@ static errno_t parse_path(const char* path, FILE** folder_out, FILE** file_out, 
       // Just return the folder.
       fname[fname_idx] = '\0';
       folder = locate_root_folder(fname);
-      *file_out == NULL;
       *folder_out = folder;
       return EXIT_SUCCESS;
     }

@@ -50,6 +50,16 @@ uintptr_t pmm_alloc_frame(void) {
 }
 
 
+uintptr_t pmm_alloc_heap_base(size_t n_frames) {
+  uintptr_t ret = pmm_alloc_frame();
+
+  for (size_t i = 0; i < n_frames; ++i)
+    pmm_alloc_frame();
+
+  return ret;
+}
+
+
 void pmm_free_frame(uintptr_t frame) {
   _bitmap_unset_bit(frame/PAGE_SIZE);
 }

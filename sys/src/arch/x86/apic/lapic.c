@@ -62,10 +62,6 @@
 
 static void* lapic_base = NULL;
 
-static uint32_t read(uint16_t reg) {
-  return *(volatile uint32_t*)(lapic_base + reg);
-}
-
 static void write(uint16_t reg, uint32_t value) {
   *(volatile uint32_t*)(lapic_base + reg) = value;
 }

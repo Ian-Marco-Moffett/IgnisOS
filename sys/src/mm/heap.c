@@ -7,136 +7,102 @@
 #define USED 0
 #define FREE 1
 
-#define DATA_START(block_base) ((&block_base->next) + 1)
+#define DATA_START(mem_block) (((char*) mem_block) + sizeof(heapblk_t))
 #define MAGIC 0xCA7F00D
 
-
-
-/*
- *  Ensure each whole heap block is page sized with 
- *  __attribute__((aligned(PAGE_SIZE)))
- *
- */
 
 typedef struct _HeapBlk {
   uint32_t magic;
   uint8_t state : 1;
-  size_t bytes_allocated;
+  size_t size;
   struct _HeapBlk* next;
-} __attribute__((aligned(PAGE_SIZE))) heapblk_t;
+} heapblk_t;
 
 
-static heapblk_t* heap_start = NULL;
-static heapblk_t* freelist = NULL; 
-static size_t heap_size_pages = 0;
+static heapblk_t* heap_head = NULL;
+static heapblk_t* heap_tail = NULL;
+static size_t heap_size = 0;
 static size_t bytes_allocated = 0;
 
 
-void create_heap(uintptr_t vaddr_start, size_t n_pages) {  
-  // Map the heap.
-  mmap((void*)vaddr_start, n_pages, PROT_READ | PROT_WRITE); 
-  heap_size_pages = n_pages;
-  heap_start = (void*)vaddr_start;
-  
-  heap_start->state = FREE;
+static heapblk_t* first_fit(size_t size) {
+  heapblk_t* block = heap_tail;
 
-  // Prepare setting up all next fields.
-  heapblk_t* cur = heap_start;
-  heapblk_t* tmp = heap_start;
-  freelist = heap_start;
-  
-  // Set all next fields.
-  for (size_t i = 0; i < n_pages; ++i) {
-    cur->bytes_allocated = 0;
-    cur->magic = MAGIC;
-    cur->next = ++tmp;
-    cur->state = FREE;
-    cur = cur->next;
+  while (block != NULL) {
+    if (block->state == FREE && block->size >= size) {
+      return block;
+    }
+
+    block = block->next;
   }
-  
-  cur->next = NULL;
-  cur->state = FREE;
-  cur->bytes_allocated = 0;
-  cur->magic = MAGIC;
+
+  return NULL;
+}
+
+
+void create_heap(uintptr_t vaddr_start, size_t n_pages) {  
+  mmap((void*)vaddr_start, n_pages, PROT_READ | PROT_WRITE); 
+  heap_size = n_pages*PAGE_SIZE;
+  heap_head = (heapblk_t*)vaddr_start;
+  heap_head->size = 0;
+  heap_head->next = NULL;
+  heap_head->state = USED;
+  heap_head->magic = MAGIC;
+  heap_tail = heap_head;
 }
 
 
 void* kmalloc(size_t size) { 
-  ASSERT(freelist->magic == MAGIC, "Heap corruption detected.\n");
-
-  // Invalid size is bad >:(
-  if (size == 0)
+  if (bytes_allocated + size > heap_size || size == 0) {
     return NULL;
+  }
   
-  // Is the freelist is NULL?
-  if (freelist == NULL)
+  // Ensure there is no heap corruption.
+  ASSERT(heap_head->magic == MAGIC, "Kernel heap corruption detected, panicked.\n");
+  ASSERT(heap_tail->magic == MAGIC, "Kernel heap corruption detected, panicked.\n");
+
+  if (bytes_allocated >= heap_size) {
     return NULL;
-
-  uint8_t n_blocks_allocd = size/0x1000;
-
-  // Too many bytes have been allocated?
-  if (bytes_allocated >= (heap_size_pages*PAGE_SIZE)-512)
-    return NULL;
-
-  // Do we need the next block?
-  if (freelist->bytes_allocated >= PAGE_SIZE-512 || freelist->bytes_allocated + size > PAGE_SIZE-512) {
-    while (n_blocks_allocd--) {
-      freelist->state = USED;
-      freelist = freelist->next;
-
-      if (freelist == NULL) {
-        return NULL;
-      }
-    }
-
-    while (freelist != NULL) {
-      if (freelist->state == FREE) {
-        break;
-      }
-
-      freelist = freelist->next;
-    }
-
-    if (freelist == NULL)
-      return NULL;
   }
 
-  char* ret = (char*)DATA_START(freelist) + freelist->bytes_allocated;
-  freelist->bytes_allocated += size;
+  heapblk_t* region = first_fit(size);
+
+  if (region == NULL) {
+    char* next = DATA_START(heap_head + heap_head->size);
+    heap_head->next = (heapblk_t*)next;
+    region = heap_head->next;
+    region->next = NULL;
+    region->state = USED;
+    region->magic = MAGIC;
+    region->size = size;
+    heap_head = region;
+    heap_tail = heap_head;
+  }
+
   bytes_allocated += size;
-  return ret;
+  return DATA_START(region);
 }
 
 
 void kfree(void* ptr) {
-  /*
-   *  Freeing the memory involves
-   *  taking the pointer and getting header base.
-   *
-   *  If the magic is not correct, the heap must be
-   *  corrupted and we must throw a kernel panic.
-   *
-   *  Once we have the pointer we will set header->state to FREE.
-   *  Once we set header->state to FREE we must set freelist to header.
-   *
-   *
-   */
+  heapblk_t* region = ptr - sizeof(heapblk_t);
 
-    heapblk_t* header = (heapblk_t*)PAGE_ALIGN((uintptr_t)ptr);
+  if (region->magic != MAGIC) {
+    return;
+  }
 
-    if (header == NULL)
-      return;
+  heapblk_t* cur = region;
 
-    ASSERT(header->magic == MAGIC, "Heap corruption detected.\n");
-    header->state = FREE;
-    freelist = header;
-    freelist->bytes_allocated = 0;
+  while (cur != NULL && ptr != DATA_START(cur)) {
+    cur->state = FREE;
+    cur = cur->next;
+  }
+
+  heap_tail = region;
 }
 
 void* krealloc(void* oldptr, size_t newsize) {
   char* new_ptr = kmalloc(newsize);
-
-  heapblk_t* header = (heapblk_t*)PAGE_ALIGN((uintptr_t)oldptr);
 
   for (size_t i = 0; i < newsize; ++i) {
     new_ptr[i] = ((char*)oldptr)[i];

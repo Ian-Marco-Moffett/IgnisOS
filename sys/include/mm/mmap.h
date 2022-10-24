@@ -22,6 +22,7 @@ typedef enum {
  */
 
 errno_t mmap(void* virt, size_t n_pages, mmap_prot_t prot);
+errno_t mmap_at(void* cr3, void* virt, size_t n_pages, mmap_prot_t prot);
 
 /*
  *  Unmaps a chunk of memory.

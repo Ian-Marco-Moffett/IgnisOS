@@ -1,7 +1,9 @@
 #include <mm/vmm.h>
 #include <mm/pmm.h>
+#include <mm/heap.h>
 #include <lib/limine.h>
 #include <lib/asm.h>
+#include <lib/log.h>
 
 volatile struct limine_hhdm_request hhdm_request = {
   .id = LIMINE_HHDM_REQUEST,
@@ -9,15 +11,14 @@ volatile struct limine_hhdm_request hhdm_request = {
 };
 
 
-static PAGEMAP root_pagemap = 0;
+PAGEMAP root_pagemap = 0;
 
 static inline void __tlb_flush_single(uintptr_t virt) {
   ASMV("invlpg (%0)" :: "r" (virt) : "memory");
 }
 
-
 PAGEMAP* vmm_make_pml4(void) {
-  PAGEMAP* new_pagemap = (PAGEMAP*)pmm_alloc_frame();
+  PAGEMAP* new_pagemap = (PAGEMAP*)pmm_alloc_frame(); 
 
   for (size_t i = 0; i < 512; ++i) {
     new_pagemap[i] = ((PAGEMAP*)root_pagemap)[i];
@@ -77,6 +78,12 @@ void vmm_map_page(PAGEMAP* pml4, uintptr_t phys, uintptr_t virt, size_t flags) {
   __tlb_flush_single(virt);
 }
 
+PAGEMAP* get_pml4(void) {
+  PAGEMAP ret;
+  ASMV("mov %%cr3, %0" : "=r" (ret) :: "memory");
+  return (PAGEMAP*)ret;
+}
+
 
 void vmm_unmap_page(PAGEMAP* pml4, uintptr_t virt) {
   // Fetch indexes.
@@ -105,6 +112,8 @@ void vmm_unmap_page(PAGEMAP* pml4, uintptr_t virt) {
 }
 
 uintptr_t vmm_get_phys(PAGEMAP* pml4, uintptr_t virt) {
+  virt = PAGE_ALIGN(virt);
+
   // Fetch indexes.
   size_t index4 = (virt & ((size_t)0x1FF << 39)) >> 39;
   size_t index3 = (virt & ((size_t)0x1FF << 30)) >> 30;
@@ -132,5 +141,4 @@ uintptr_t vmm_get_phys(PAGEMAP* pml4, uintptr_t virt) {
 
 void vmm_init(void) {
   ASMV("mov %%cr3, %0" : "=r" (root_pagemap) :: "memory");
-  root_pagemap = (PAGEMAP)vmm_make_pml4();
 }

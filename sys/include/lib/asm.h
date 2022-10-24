@@ -5,6 +5,7 @@
 #define ASMV(_asm) __asm__ __volatile__(_asm)
 #define _packed __attribute__((packed))
 #define _noreturn __attribute__((noreturn))
+#define _naked __attribute__((naked))
 #define _isr _noreturn
 
 

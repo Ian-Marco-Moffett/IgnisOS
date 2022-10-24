@@ -1,8 +1,8 @@
 #include <tty/console.h>
-#include <stdint.h>
-#include <stdarg.h>
+#include <proc/proc.h>
+#include <lib/types.h>
 
-#define MAX_SYSCALLS 1
+#define MAX_SYSCALLS 2
 
 const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
 
@@ -26,7 +26,7 @@ struct SyscallRegs {
  *
  */
 
-void sys_conout(void) {
+static void sys_conout(void) {
   const char* str = (const char*)syscall_regs.rbx;
 
   // I don't want it to be that easy to fake
@@ -40,7 +40,13 @@ void sys_conout(void) {
 }
 
 
+static void sys_initrd_load(void) {
+  syscall_regs.rax = proc_initrd_load((const char*)syscall_regs.rbx);
+}
+
+
 void(*syscall_table[MAX_SYSCALLS])(void) = {
   sys_conout,       // 0x0.
+  sys_initrd_load,  // 0x1.
 };
 

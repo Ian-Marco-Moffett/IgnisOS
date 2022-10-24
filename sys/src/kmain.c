@@ -12,7 +12,7 @@
 #include <proc/tss.h>
 #include <firmware/acpi/acpi.h>
 
-#define KHEAP_START VMM_HIGHER_HALF + pmm_alloc_frame()
+#define N_HEAP_PAGES 7
 
 #ifdef __x86_64__
 #include <arch/x64/idt.h>
@@ -26,7 +26,7 @@
 static void init_memory_managers(void) {
   pmm_init();
   vmm_init();
-  create_heap(KHEAP_START, 2);
+  create_heap(pmm_alloc_heap_base(N_HEAP_PAGES) + VMM_HIGHER_HALF, N_HEAP_PAGES);
 }
 
 static void fs_init(void) {
@@ -69,7 +69,7 @@ void _start(void) {
 
   load_tss();
   printk("[INFO]: TSS loaded.\n");
-  
+
   fs_init();
   printk("[INFO]: File systems initialized.\n"); 
 

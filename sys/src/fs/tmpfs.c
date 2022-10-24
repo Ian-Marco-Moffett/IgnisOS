@@ -15,7 +15,6 @@
 static fsnode_t* fs_base = NULL;
 static uint8_t* mpool = NULL;
 static size_t mpool_idx = 0;
-static size_t fidx = 0;
 
 typedef struct {
   size_t data_size;

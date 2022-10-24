@@ -1,6 +1,7 @@
 #include <lib/elf.h>
 #include <fs/initrd.h>
 #include <lib/log.h>
+#include <lib/asm.h>
 #include <mm/vmm.h>
 #include <mm/mmap.h>
 #include <mm/heap.h>
@@ -75,23 +76,22 @@ void* elf_load(const char* initrd_path, program_image_t* pimg) {
 
   for (uint64_t i = 0; i < sizeof(header); ++i) {
     ((char*)&header)[i] = elf_ptr[i];
-  }
+  } 
 
   if (!(is_valid(header)) || !(is_supported(header))) {
     return NULL;
   }
 
   const uint64_t PHDRS_SIZE = header.e_phnum*header.e_phentsize;
-  Elf64_Phdr* prog_headers = kmalloc(PHDRS_SIZE);
+  Elf64_Phdr* prog_headers = kmalloc(PHDRS_SIZE); 
 
   elf_ptr = (char*)ORIG_ELF_PTR + header.e_phoff;
   pimg->phdrs = prog_headers;
-  pimg->elf_ptr = elf_ptr;
+  pimg->elf_ptr = elf_ptr; 
 
   for (uint64_t i = 0; i < PHDRS_SIZE; ++i) {
     ((char*)prog_headers)[i] = elf_ptr[i];
-  }
-
+  } 
 
   for (Elf64_Phdr* phdr = prog_headers; (char*)phdr < (char*)prog_headers + header.e_phnum * header.e_phentsize; phdr = (Elf64_Phdr*)((char*)phdr + header.e_phentsize)) {
     if (phdr->p_type == PT_LOAD) {
@@ -100,7 +100,7 @@ void* elf_load(const char* initrd_path, program_image_t* pimg) {
 
       elf_ptr = (char*)ORIG_ELF_PTR + phdr->p_offset;
       mmap((void*)segment, n_pages, PROT_READ | PROT_WRITE | PROT_USER | PROT_EXEC);
-
+            
       for (uint64_t i = 0; i < phdr->p_filesz; ++i) {
         ((char*)segment)[i] = elf_ptr[i];
       }

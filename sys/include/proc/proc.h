@@ -18,6 +18,7 @@ typedef struct Process {
 
 
 void proc_init(void);
+uint8_t proc_initrd_load(const char* path);
 void enter_ring3(uint64_t rip);
 
 #endif
