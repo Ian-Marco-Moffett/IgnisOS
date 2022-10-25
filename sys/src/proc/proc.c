@@ -32,7 +32,7 @@ _naked static void spawn_from_rip(void* rip) {
 
   new_proc->pid = next_pid++;
   new_proc->stack_base = PROC_STACK_START;
-  new_proc->rsp = new_proc->stack_base + (PAGE_SIZE/2);
+  uint64_t rsp = new_proc->stack_base + (PAGE_SIZE/2);
   
   // Fork a new PML4.
   new_proc->cr3 = pmm_alloc_frame();
@@ -43,13 +43,13 @@ _naked static void spawn_from_rip(void* rip) {
   if (new_proc->cr3 == 0)
     return;
 
-  mmap((void*)new_proc->rsp, 1, PROT_READ | PROT_WRITE | PROT_USER);
+  mmap((void*)new_proc->stack_base, 1, PROT_READ | PROT_WRITE | PROT_USER);
   new_proc->next = NULL;
 
   process_queue_head->next = new_proc;
   process_queue_head = new_proc;
   
-  ASMV("mov %0, %%rsp" :: "a" (new_proc->rsp));
+  ASMV("mov %0, %%rsp" :: "a" (rsp));
   enter_ring3((uint64_t)rip);
   __builtin_unreachable();
 }
@@ -63,7 +63,7 @@ uint8_t proc_initrd_load(const char* path) {
 }
 
 
-static void start_init(void) {
+static void start_init(uint64_t rsp) {
   /*
    *  Load the initd binary, switch stacks
    *  and enter ring 3.
@@ -72,7 +72,7 @@ static void start_init(void) {
   program_image_t unused;
   void(*initd)(void) = elf_load("initd.sys", &unused);
   
-  ASMV("mov %0, %%rsp" :: "r" (process_queue_base->rsp) : "memory");
+  ASMV("mov %0, %%rsp" :: "r" (rsp) : "memory");
   enter_ring3((uint64_t)initd);
 
   while (1);
@@ -92,12 +92,12 @@ void proc_init(void) {
   
   mmap((void*)PROC_STACK_START, 1, PROT_READ | PROT_WRITE | PROT_USER);
 
-  process_queue_base->rsp = process_queue_base->stack_base+(PAGE_SIZE/2);
+  uint64_t rsp = process_queue_base->stack_base+(PAGE_SIZE/2);
 
   process_queue_base->next = NULL; 
   process_queue_head = process_queue_base;
 
   running_process = process_queue_base;
   printk("[INFO]: Base process initialized.\n");
-  start_init();
+  start_init(rsp);
 }

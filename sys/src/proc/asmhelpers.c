@@ -1,32 +1,13 @@
 #include <proc/proc.h>
+#include <lib/string.h>
 
 extern process_t* running_process;
 extern process_t* process_queue_base;
 
-
-void proc_set_rsp(uint64_t rsp_val) {
-  running_process->rsp = rsp_val;
-}
-
-uint64_t proc_get_rsp(void) {
-  return running_process->rsp;
-}
-
-
-uint64_t proc_get_cr3(void) {
-  return running_process->cr3;
-}
-
-uint64_t proc_get_rip(void) {
-  return running_process->rip;
-}
-
-
-void proc_set_rip(uint64_t rip) {
-  running_process->rip = rip;
-}
-
-
-void proc_next(void) {
+void proc_switch(regs_t* regs, iret_sf_t* stackframe) {
+  kmemcpy((uint8_t*)&running_process->regs, (uint8_t*)regs, sizeof(running_process->regs));
+  kmemcpy((uint8_t*)&running_process->iret_stackframe, (uint8_t*)stackframe, sizeof(running_process->iret_stackframe));
   running_process = running_process->next == NULL ? process_queue_base : running_process->next;
+  kmemcpy((uint8_t*)regs, (uint8_t*)&running_process->regs, sizeof(running_process->regs));
+  kmemcpy((uint8_t*)stackframe, (uint8_t*)&running_process->iret_stackframe, sizeof(running_process->iret_stackframe));
 }
