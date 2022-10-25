@@ -12,10 +12,10 @@
 #define PROC_STACK_START 0x1000
 
 extern PAGEMAP root_pagemap;
-static process_t* process_queue_head = NULL;
-static size_t next_pid = 2;
+static size_t next_pid = 1;
+process_t* process_queue_head = NULL;
 process_t* process_queue_base = NULL;
-process_t* running_process;
+process_t* running_process = NULL;
 
 
 static inline void fork_pml4(void* frame) {
@@ -23,33 +23,26 @@ static inline void fork_pml4(void* frame) {
 }
 
 
-_naked static void spawn_from_rip(void* rip) {
-  static process_t* new_proc;
-  new_proc = kmalloc(sizeof(process_t));
-
-  if (new_proc == NULL)
-    return;
-
+static process_t* make_process(void) {
+  process_t* new_proc = kmalloc(sizeof(process_t));
   new_proc->pid = next_pid++;
+
   new_proc->stack_base = PROC_STACK_START;
+
+  new_proc->cr3 = (uint64_t)vmm_make_pml4();
+  new_proc->next = NULL; 
+  ASSERT(new_proc->cr3 != 0, "Process's cr3 is null.\n");
+  
+  ASMV("mov %0, %%cr3" :: "r" (new_proc->cr3));
+  mmap((void*)PROC_STACK_START, 1, PROT_READ | PROT_WRITE | PROT_USER);
+  return new_proc;
+}
+
+
+_naked static void spawn_from_rip(void* rip) { 
+  process_t* new_proc = make_process();
   uint64_t rsp = new_proc->stack_base + (PAGE_SIZE/2);
-  
-  // Fork a new PML4.
-  new_proc->cr3 = pmm_alloc_frame();
-  fork_pml4((void*)new_proc->cr3);
-
-  ASMV("mov %0, %%cr3" :: "a" (new_proc->cr3));
-
-  if (new_proc->cr3 == 0)
-    return;
-
-  mmap((void*)new_proc->stack_base, 1, PROT_READ | PROT_WRITE | PROT_USER);
-  new_proc->next = NULL;
-
-  process_queue_head->next = new_proc;
-  process_queue_head = new_proc;
-  
-  ASMV("mov %0, %%rsp" :: "a" (rsp));
+  ASMV("mov %0, %%rsp" :: "r" (rsp) : "memory");
   enter_ring3((uint64_t)rip);
   __builtin_unreachable();
 }
@@ -79,25 +72,11 @@ static void start_init(uint64_t rsp) {
 }
 
 
-void proc_init(void) {
-  process_queue_base = kmalloc(sizeof(process_t));
-  process_queue_base->pid = 1;
-
-  process_queue_base->stack_base = PROC_STACK_START;
-
-  process_queue_base->cr3 = (uint64_t)vmm_make_pml4();
-  ASSERT(process_queue_base->cr3 != 0, "Base process's cr3 is null.\n");
-  
-  ASMV("mov %0, %%cr3" :: "r" (process_queue_base->cr3));
-  
-  mmap((void*)PROC_STACK_START, 1, PROT_READ | PROT_WRITE | PROT_USER);
-
-  uint64_t rsp = process_queue_base->stack_base+(PAGE_SIZE/2);
-
-  process_queue_base->next = NULL; 
-  process_queue_head = process_queue_base;
-
-  running_process = process_queue_base;
-  printk("[INFO]: Base process initialized.\n");
+void proc_init(void) { 
+  process_t* init = make_process();
+  process_queue_base = init;
+  process_queue_head = init;
+  running_process = init;
+  uint64_t rsp = init->stack_base + (PAGE_SIZE/2);
   start_init(rsp);
 }

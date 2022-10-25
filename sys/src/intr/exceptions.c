@@ -69,12 +69,13 @@ _isr void __vec12(void* stackframe) {
 
 
 _isr void __vec13(void* stackframe) {
-  printk(PRINTK_PANIC "Privilege violation.\n");
+  // printk(PRINTK_PANIC "Privilege violation.\n");
   INTR_END;
 }
 
 
 _isr void __vec14(void* stackframe) {
+  __asm__ __volatile__("cli");
   uint64_t cr2;
   ASMV("mov %%cr2, %0" : "=r" (cr2));
   printk(PRINTK_PANIC "Memory access violation at %x.\n", cr2);

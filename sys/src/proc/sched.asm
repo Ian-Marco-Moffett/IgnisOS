@@ -18,11 +18,15 @@ context_switch:
   mov [regs.rdi], rdi
   mov [regs.rsi], rsi
   mov [regs.rbp], rbp 
- 
+   
   mov rdi, iret_stackframe
   mov rsi, rsp
   mov rcx, 5
   rep movsq
+
+  mov rdi, regs
+  mov rsi, iret_stackframe
+  call proc_switch
 
   mov rax, [regs.rax]
   mov rbx, [regs.rbx]
