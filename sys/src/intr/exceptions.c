@@ -69,7 +69,7 @@ _isr void __vec12(void* stackframe) {
 
 
 _isr void __vec13(void* stackframe) {
-  // printk(PRINTK_PANIC "Privilege violation.\n");
+  printk(PRINTK_PANIC "Privilege violation.\n");
   INTR_END;
 }
 

@@ -21,8 +21,9 @@ extern g_SYSCALL_COUNT
 
 dispatch_syscall:
     cli
-
-    mov [_stack_top], rsp
+  
+    mov r11, [rsp]
+    mov [ret_rip], r11
 
     movzx r11, word [g_SYSCALL_COUNT]
     cmp rax, r11
@@ -71,11 +72,8 @@ dispatch_syscall:
     mov r10, rax
 
     get_reg_at 0
-    
-    .done:
-        mov rsp, [_stack_top]
-        iretq
+.done:
+  iretq
 
 section .data
-_stack_top: dq 0
-
+ret_rip: dq 0

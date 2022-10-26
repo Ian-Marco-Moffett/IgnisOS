@@ -6,7 +6,6 @@
 #include <lib/log.h>
 #include <lib/assert.h>
 #include <lib/elf.h>
-#include <lib/asm.h>
 #include <lib/string.h>
 
 #define PROC_STACK_START 0x1000
@@ -23,6 +22,7 @@ static inline void fork_pml4(void* frame) {
 }
 
 
+
 static process_t* make_process(void) {
   process_t* new_proc = kmalloc(sizeof(process_t));
   new_proc->pid = next_pid++;
@@ -35,14 +35,15 @@ static process_t* make_process(void) {
   
   ASMV("mov %0, %%cr3" :: "r" (new_proc->cr3));
   mmap((void*)PROC_STACK_START, 1, PROT_READ | PROT_WRITE | PROT_USER);
+  new_proc->regs.rsp = new_proc->stack_base + (PAGE_SIZE/2);
+
   return new_proc;
 }
 
 
 _naked static void spawn_from_rip(void* rip) { 
-  process_t* new_proc = make_process();
-  uint64_t rsp = new_proc->stack_base + (PAGE_SIZE/2);
-  ASMV("mov %0, %%rsp" :: "r" (rsp) : "memory");
+  process_t* new_proc = make_process(); 
+  ASMV("mov %0, %%rsp" :: "r" (new_proc->regs.rsp) : "memory");
   enter_ring3((uint64_t)rip);
   __builtin_unreachable();
 }
@@ -64,11 +65,19 @@ static void start_init(uint64_t rsp) {
    */
   program_image_t unused;
   void(*initd)(void) = elf_load("initd.sys", &unused);
-  
-  ASMV("mov %0, %%rsp" :: "r" (rsp) : "memory");
-  enter_ring3((uint64_t)initd);
-
+  spawn_from_rip(initd); 
   while (1);
+}
+
+
+void proc_switch(regs_t* regs) {
+  kmemcpy((uint8_t*)&running_process->regs, (uint8_t*)regs, sizeof(running_process->regs));
+  if (running_process->next)
+    running_process = running_process->next;
+  else
+    running_process = process_queue_base;
+
+  kmemcpy((uint8_t*)regs, (uint8_t*)&running_process->regs, sizeof(running_process->regs));
 }
 
 
