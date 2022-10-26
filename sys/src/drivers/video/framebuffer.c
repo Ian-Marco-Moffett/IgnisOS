@@ -1,5 +1,6 @@
 #include <drivers/video/framebuffer.h>
 #include <lib/limine.h>
+#include <lib/string.h>
 #include <uapi/uapi.h>
 
 static volatile struct limine_framebuffer_request framebuf_req = {
@@ -20,6 +21,10 @@ static struct Font {
 
 static struct limine_framebuffer* framebuffer = NULL;
 
+static uint32_t _framebuffer_get_index(uint32_t x, uint32_t y) {
+  return x + y * (framebuffer->pitch/4);
+}
+
 void framebuffer_ioctl(unsigned long cmd, size_t args[20]) {
   switch (cmd) {
     case FRAMEBUFFER_IOCTL_CLEAR:
@@ -30,11 +35,28 @@ void framebuffer_ioctl(unsigned long cmd, size_t args[20]) {
         break;
       framebuffer_putpix(args[0], args[1], args[2]);
       break;
-  }
-}
+    case FRAMEBUFFER_IOCTL_PUTSTR:
+      {
+        uint32_t orig_x = args[0];
+        uint32_t y = args[1];
+        const char* str = (const char*)args[2];
+        uint32_t bg = args[3];
+        uint32_t fg = args[4];
 
-static uint32_t _framebuffer_get_index(uint32_t x, uint32_t y) {
-  return x + y * (framebuffer->pitch/4);
+        uint32_t x = orig_x;
+
+        for (size_t i = 0; i < kstrlen(str); ++i) {
+          if (str[i] == '\n') {
+            y += FONT_HEIGHT+4;
+            x = orig_x;
+            continue;
+          }
+          framebuffer_putch(x, y, str[i], bg, fg);
+          x += FONT_WIDTH;
+        }
+      }
+      break;
+  }
 }
 
 
