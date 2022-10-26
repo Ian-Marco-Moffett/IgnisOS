@@ -7,6 +7,7 @@
 #include <lib/assert.h>
 #include <lib/elf.h>
 #include <lib/string.h>
+#include <intr/syscall.h>
 
 #define PROC_STACK_START 0x1000
 
@@ -41,9 +42,29 @@ static process_t* make_process(void) {
 }
 
 
-_naked static void spawn_from_rip(void* rip) { 
+void proc_set_rsp(uint64_t rsp) {
+  running_process->regs.rsp = rsp;
+}
+
+
+_naked static void spawn_from_rip(void* rip, uint8_t push_task) { 
   process_t* new_proc = make_process(); 
+  shmem_make_port(SPT_SYSCALL, 0x7000);
   ASMV("mov %0, %%rsp" :: "r" (new_proc->regs.rsp) : "memory");
+
+  if (push_task) {
+    process_queue_head->next = new_proc;
+    process_queue_head = new_proc;
+    new_proc->regs.rflags = 0x202;
+    new_proc->regs.rip = (uint64_t)rip;
+  }
+  
+  /*
+   *  Make a syscall port
+   *  so this process
+   *  can make requests
+   *  to the kernel.
+   */
   enter_ring3((uint64_t)rip);
   __builtin_unreachable();
 }
@@ -52,7 +73,7 @@ uint8_t proc_initrd_load(const char* path) {
   program_image_t unused;
   ASMV("mov %0, %%cr3" :: "a" (root_pagemap));
   void(*rip)(void) = elf_load(path, &unused);
-  spawn_from_rip(rip);
+  spawn_from_rip(rip, 1);
   return 0;
 }
 
@@ -65,13 +86,24 @@ static void start_init(uint64_t rsp) {
    */
   program_image_t unused;
   void(*initd)(void) = elf_load("initd.sys", &unused);
-  spawn_from_rip(initd); 
+  spawn_from_rip(initd, 0); 
   while (1);
 }
 
 
 void proc_switch(regs_t* regs) {
   kmemcpy((uint8_t*)&running_process->regs, (uint8_t*)regs, sizeof(running_process->regs));
+
+  // TODO: Allow SPT_GENERAL usage.
+  if (running_process->ports[SPT_SYSCALL].vaddr != NULL) {
+    uint64_t* port_shmem = running_process->ports[SPT_SYSCALL].vaddr;
+    if (*port_shmem != 0 && *port_shmem < MAX_SYSCALLS+1 && port_shmem[4] == 1) {
+      syscall_table[*port_shmem - 1](port_shmem);
+      *port_shmem = 0;
+    }
+
+  }
+
   if (running_process->next)
     running_process = running_process->next;
   else

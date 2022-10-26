@@ -6,9 +6,12 @@
 #include <services.cfg.h>
 
 void main(void) {
+  syscall(0x1, "AYO-");
+  /*
   for (size_t i = 0; i < SIZEOF_ARRAY(services); ++i) {
-    syscall(0x1, services[i]);
+    // syscall(0x1, services[i]);
   }
+  */
 
   while (1);
 }

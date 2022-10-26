@@ -20,7 +20,7 @@ context_switch:
   mov [regs.r14], r14
   mov [regs.r15], r15
 
-  mov rax, [rsp]
+  mov rax, [rsp] 
   mov [regs.rip], rax
 
   mov rax, [rsp+(8*2)]
@@ -52,7 +52,14 @@ context_switch:
   mov r13, [regs.r13]
   mov r14, [regs.r14]
   mov r15, [regs.r15]
+
+  cmp qword [regs.rip], 0
+  je bruh
+
   iretq
+
+bruh:
+  int 0x0
 
 section .data
 regs:

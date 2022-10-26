@@ -3,6 +3,7 @@
 
 #include <lib/types.h>
 #include <lib/asm.h>
+#include <ipc/shmem.h>
 
 
 typedef uint16_t pid_t;
@@ -29,10 +30,16 @@ typedef struct {
   uint64_t rflags;
 } regs_t;
 
+
+typedef struct {
+  uint64_t* vaddr;
+} pport_t;
+
 typedef struct Process {
   pid_t pid;
   uint64_t stack_base;
   uint64_t cr3;
+  pport_t ports[2];
   regs_t regs;
   struct Process* next;
 } process_t;

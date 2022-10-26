@@ -27,8 +27,6 @@ void ps2_keyboard_ioctl(unsigned long cmd, size_t args[20]) {
 
 
 __attribute__((interrupt)) void __irq1_isr(void* stackframe) {
-  volatile int a = 0 / 0;
-  
   const char* const SC_ASCII = "\x00\x1B" "1234567890-=" "\x08"
       "\x00" "qwertyuiop[]" "\x0D\x1D" "asdfghjkl;'`" "\x00" "\\"
       "zxcvbnm,./" "\x00\x00\x00" " ";
