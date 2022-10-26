@@ -5,7 +5,7 @@ set (CMAKE_C_FLAGS "-fno-stack-protector \
 -fno-pic -Werror=implicit -Werror=implicit-function-declaration -Werror=implicit-int \
 -Werror=int-conversion -Wno-builtin-declaration-mismatch -no-pie \
 -Werror=incompatible-pointer-types -Werror=int-to-pointer-cast -Wunused \
--nostdlib -nostdinc -I${PROJECT_SOURCE_DIR}/etc/headerconf/ -I${PROJECT_SOURCE_DIR}/usr/lib/libc/include/ -I${PROJECT_SOURCE_DIR}/usr/lib/libgfx/include/")
+-nostdlib -nostdinc -I${PROJECT_SOURCE_DIR}/etc/headerconf/ -I${PROJECT_SOURCE_DIR}/usr/lib/libc/include/ -I${PROJECT_SOURCE_DIR}/usr/lib/libgfx/include/ -I${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
 
 add_executable(kesswm ${CFILES})
