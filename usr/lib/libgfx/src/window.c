@@ -1,5 +1,5 @@
-#include <window.h>
-#include <draw.h>
+#include <libgfx/window.h>
+#include <libgfx/draw.h>
 
 #define WINDOW_BAR_HEIGHT 17
 

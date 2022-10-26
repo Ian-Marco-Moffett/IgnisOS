@@ -1,5 +1,5 @@
 #include <win.h>
-#include <window.h>     // libgfx.
+#include <libgfx/window.h>
 #include <sys/fb.h>
 #include <sys/ioctl.h>
 
