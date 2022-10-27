@@ -1,23 +1,27 @@
 .global syscall
 syscall:
-  mov %rdi, (a_rdi)
-  mov %rsi, (a_rsi)
-  mov %rdx, (a_rdx)
-  mov %rcx, (a_rcx)
-  mov %r8, (a_r8)
-  mov %r9, (a_r9)
+  pushq %rbp
+  movq %rdi, (a_rdi)
+  movq %rsi, (a_rsi)
+  movq %rdx, (a_rdx)
+  movq %rcx, (a_rcx)
+  movq %r8, (a_r8)
+  movq %r9, (a_r9)
 
-  mov (a_rdi), %rax
-  mov (a_rsi), %rbx
-  mov (a_rdx), %rcx
-  mov (a_rcx), %rdi
-  mov (a_r8), %rsi
-  mov (a_r9), %r8
-  mov 8(%rsp), %r9
-  mov 16(%rsp), %r10
-  mov 24(%rsp), %r11
-  mov 32(%rsp), %r12
+  movq (a_rdi), %rax
+  movq (a_rsi), %rbx
+  movq (a_rdx), %rcx
+  movq (a_rcx), %rdx
+  movq (a_r8), %rsi
+  movq (a_r9), %rdi
+  movq 16(%rsp), %r8
+  movq 24(%rsp), %r9
+  movq 32(%rsp), %r10
+  movq 40(%rsp), %r11
+  movq 48(%rsp), %r12
+  movq 56(%rsp), %r13
   int $0x80
+  popq %rbp
   retq
 
 .section .data

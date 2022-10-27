@@ -8,6 +8,7 @@ extern trap_entry
 
 __irq0_isr:
   cli
+  push rbp
   push rax
   push rdi
   push rsi
@@ -23,10 +24,11 @@ __irq0_isr:
   pop rsi
   pop rdi
   pop rax
-  iretq
+  pop rbp
   
   mov qword [saved_rsp], rsp
   push 0x20
+  push rbp
   push qword [saved_rsp]
   jmp trap_entry
 

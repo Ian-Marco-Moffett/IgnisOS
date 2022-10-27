@@ -3,8 +3,8 @@ global trap_entry
 extern trap
 
 trap_entry: 
-  ;; TRAPNO HERE. 
-  ;; RSP HERE.
+  ;; TRAPNO HERE.
+  ;; K_RSP HERE.
   push gs
   push fs
   push r15
@@ -19,16 +19,23 @@ trap_entry:
   push rcx
   push rdx
   push rbx
-  push rbp
   push rsi
   push rdi
 
   mov rdi, rsp
   call trap
+  
+  cmp rax, 0
+  jz .trap_end
+  
+  ;; Must be a task switch
+  ;; since we didn't jump to
+  ;; .trap_end
+  mov rsp, rax
 
+.trap_end:
   pop rdi
   pop rsi
-  pop rbp
   pop rbx
   pop rdx
   pop rcx
@@ -43,5 +50,7 @@ trap_entry:
   pop r15
   pop fs
   pop gs
-  pop rsp
+  add rsp, 8
+  pop rbp
+  add rsp, 8
   iretq

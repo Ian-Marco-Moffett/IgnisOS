@@ -16,7 +16,6 @@ typedef volatile uint16_t pid_t;
 struct trapframe {
   uint64_t rdi;
   uint64_t rsi;
-  uint64_t rbp;
   uint64_t rbx;
   uint64_t rdx;
   uint64_t rcx;
@@ -35,6 +34,7 @@ struct trapframe {
 
   // Other information.
   uint64_t k_rsp;
+  uint64_t rbp;
   uint64_t trapno;
 };
 

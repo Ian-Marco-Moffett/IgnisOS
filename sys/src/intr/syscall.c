@@ -7,20 +7,23 @@
 
 const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
 
+
 /*
  *  Syscall arguments:
  *
- *  RAX,
- *  RBX,
- *  RCX,
- *  RDI,
- *  RSI,
- *  R8,
- *  R9,
- *  R10,
- *  R11,
- *  R12,
- *  R13,
+ *  RAX
+ *  RBX
+ *  RCX
+ *  RDX
+ *  RSI
+ *  RDI
+ *  R8
+ *  R9
+ *  R10
+ *  R11
+ *  R12
+ *  R13
+ * 
  *
  */
 
@@ -52,7 +55,7 @@ static void sys_conout(struct trapframe* tf) {
 /*
  * RBX: Driver ID string.
  * RCX: Command.
- * RDI to R13: IOCTL args (9 args max).
+ * RDX to R13: Args.
  *
  *
  */
@@ -62,15 +65,16 @@ static void sys_ioctl(struct trapframe* tf) {
 
   if (driver == NULL) {
     return;
-  }
-
+  } 
+  
   size_t ioctl_args[20] = {
-    tf->rdi, tf->rsi, tf->r8,
-    tf->r9, tf->r10, tf->r11,
-    tf->r12, tf->r13
+    tf->rdx, tf->rsi, tf->rdi,
+    tf->r8, tf->r9, tf->r10,
+    tf->r11, tf->r12, tf->r13
   };
 
   driver->ioctl(tf->rcx, ioctl_args);
+
 }
 
 /*
