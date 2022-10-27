@@ -97,7 +97,7 @@ void proc_switch(regs_t* regs) {
   // TODO: Allow SPT_GENERAL usage.
   if (running_process->ports[SPT_SYSCALL].vaddr != NULL) {
     uint64_t* port_shmem = running_process->ports[SPT_SYSCALL].vaddr;
-    if (*port_shmem != 0 && *port_shmem < MAX_SYSCALLS+1 && port_shmem[4] == 1) {
+    if (*port_shmem != 0 && *port_shmem < MAX_SYSCALLS+1 && port_shmem[5] == 1) {
       syscall_table[*port_shmem - 1](port_shmem);
       *port_shmem = 0;
     }

@@ -1,7 +1,7 @@
 #ifndef SYSCALL_H_
 #define SYSCALL_H_
 
-#define MAX_SYSCALLS 1
+#define MAX_SYSCALLS 2
 
 #include <lib/types.h>
 

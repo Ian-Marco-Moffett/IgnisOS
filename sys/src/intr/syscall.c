@@ -33,34 +33,29 @@ static void sys_conout(uint64_t* args) {
 
 
 /*
-static void sys_initrd_load(void) {
-  // regs.rax = proc_initrd_load((const char*)regs.rbx);
-}
-*/
-
-
-/*
- *  RSI: Driver ID.
- *  RDX: Command.
- *  
+ * args[1]: Driver ID string.
+ * args[2]: Command.
+ * args[3] to args[10]: IOCTL args (8 args max).
+ *
  *
  */
 
-/*
-static void sys_ioctl(regs_t regs) {
-  driver_node_t* driver = uapi_locate_driver((const char*)regs.rbx);
+static void sys_ioctl(uint64_t* args) {
+  if (args[1] == 0)
+    return;
+
+  driver_node_t* driver = uapi_locate_driver((const char*)args[1]);
 
   if (driver == NULL) {
-    regs.rax = -1;
     return;
   }
 
-  size_t args[20] = {regs.rdx, regs.rsi, regs.rdi, regs.r8, regs.r9, regs.r10};
-  driver->ioctl(regs.rcx, args);
+  size_t ioctl_args[20] = {args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]};
+  driver->ioctl(args[2], ioctl_args);
 }
-*/
 
 
 void(*syscall_table[MAX_SYSCALLS])(uint64_t* args) = {
   sys_conout,       // 0x1.
+  sys_ioctl,        // 0x2.
 };
