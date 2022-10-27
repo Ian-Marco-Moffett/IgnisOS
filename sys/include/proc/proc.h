@@ -58,6 +58,8 @@ typedef struct Process {
 void proc_init(void);
 void enter_ring3(uint64_t rip);
 void task_sched(struct trapframe* tf);
+void launch_exec(const char* path);
+
 
 
 extern process_t* process_queue_head;

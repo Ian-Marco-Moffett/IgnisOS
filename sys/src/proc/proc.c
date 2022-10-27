@@ -145,6 +145,21 @@ void task_sched(struct trapframe* tf) {
 }
 
 
+void launch_exec(const char* path) {
+  make_process();
+  program_image_t unused;
+  uint64_t rip = (uint64_t)elf_load(path, &unused);
+
+  update_kernel_stack(process_queue_head->ctx.kstack_base);
+  ASMV("mov %0, %%cr3" :: "a" (process_queue_head->ctx.cr3));
+
+  uint64_t rsp = PROC_U_STACK_START + (0x1000/2);
+  ASMV("mov %0, %%rsp" :: "a" (rsp));
+  running_process = process_queue_head;
+  enter_ring3(rip);
+}
+
+
 void proc_init(void) {
   /*
    *  Make a new process and queue.
@@ -160,6 +175,7 @@ void proc_init(void) {
 
   program_image_t unused;
   uint64_t rip = (uint64_t)elf_load("initd.sys", &unused);
+  ASSERT(rip != 0, "Could not load initd.sys!\n");
 
   /*
    *  We shouldn't forget

@@ -11,5 +11,6 @@ void trap(struct trapframe* tf) {
         return;
 
       syscall_table[tf->rax](tf);
+      break;
   }
 }

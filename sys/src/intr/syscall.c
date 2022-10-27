@@ -19,6 +19,8 @@ const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
  *  R9,
  *  R10,
  *  R11,
+ *  R12,
+ *  R13,
  *
  */
 
@@ -50,7 +52,7 @@ static void sys_conout(struct trapframe* tf) {
 /*
  * RBX: Driver ID string.
  * RCX: Command.
- * RDI to R11: IOCTL args (6 args max).
+ * RDI to R13: IOCTL args (9 args max).
  *
  *
  */
@@ -64,15 +66,21 @@ static void sys_ioctl(struct trapframe* tf) {
 
   size_t ioctl_args[20] = {
     tf->rdi, tf->rsi, tf->r8,
-    tf->r9, tf->r10, tf->r11
+    tf->r9, tf->r10, tf->r11,
+    tf->r12, tf->r13
   };
 
   driver->ioctl(tf->rcx, ioctl_args);
 }
 
+/*
+ *  Loads a process from the initrd.
+ *  RBX: Path.
+ *
+ */
 
 static void sys_launch(struct trapframe* tf) {
-  // make_process((const char*)args[1]);
+  launch_exec((const char*)tf->rbx);
 }
 
 

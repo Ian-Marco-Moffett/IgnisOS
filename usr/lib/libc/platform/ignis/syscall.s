@@ -13,6 +13,10 @@ syscall:
   mov (a_rcx), %rdi
   mov (a_r8), %rsi
   mov (a_r9), %r8
+  mov 8(%rsp), %r9
+  mov 16(%rsp), %r10
+  mov 24(%rsp), %r11
+  mov 32(%rsp), %r12
   int $0x80
   retq
 

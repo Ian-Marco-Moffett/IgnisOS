@@ -6,10 +6,9 @@
 #include <services.cfg.h>
 
 void main(void) {
-  puts("AYO-");
-  // _IOCTL(FRAMEBUFFER_IOCTL_ID, FRAMEBUFFER_CLEARSCREEN, 0x000000);
+  puts(_CLEARSCREEN "-- InitD v0.0.1 --\n");
   for (size_t i = 0; i < SIZEOF_ARRAY(services); ++i) {
-    // syscall(0x3, services[i]);
+    syscall(0x2, services[i]);
   }
 
   while (1);

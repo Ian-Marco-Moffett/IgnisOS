@@ -4,7 +4,7 @@
 #include <sys/syscall.h>
 
 
-#define _IOCTL(device_id, command, ...) syscall(0x2, device_id, command, __VA_ARGS__);
+#define _IOCTL(device_id, command, ...) syscall(0x1, device_id, command, __VA_ARGS__);
 
 
 #endif
