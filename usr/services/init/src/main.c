@@ -6,12 +6,11 @@
 #include <services.cfg.h>
 
 void main(void) {
-  _IOCTL(FRAMEBUFFER_IOCTL_ID, FRAMEBUFFER_CLEARSCREEN, 0x808080);
-  /*
+  puts("AYO-");
+  // _IOCTL(FRAMEBUFFER_IOCTL_ID, FRAMEBUFFER_CLEARSCREEN, 0x000000);
   for (size_t i = 0; i < SIZEOF_ARRAY(services); ++i) {
-    // syscall(0x1, services[i]);
+    // syscall(0x3, services[i]);
   }
-  */
 
   while (1);
 }

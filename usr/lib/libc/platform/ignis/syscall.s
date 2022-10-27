@@ -1,12 +1,25 @@
 .global syscall
 syscall:
-  movq %rdi, (0x7000)
-  movq %rsi, (0x7000+8)
-  movq %rdx, (0x7000+16)
-  movq %rcx, (0x7000+24)
-  movq %r8, (0x7000+32)
-  movq $1, (0x7000+40)
-.busyloop:
-  cmpq $0, (0x7000)
-  jne .busyloop
-  ret
+  mov %rdi, (a_rdi)
+  mov %rsi, (a_rsi)
+  mov %rdx, (a_rdx)
+  mov %rcx, (a_rcx)
+  mov %r8, (a_r8)
+  mov %r9, (a_r9)
+
+  mov (a_rdi), %rax
+  mov (a_rsi), %rbx
+  mov (a_rdx), %rcx
+  mov (a_rcx), %rdi
+  mov (a_r8), %rsi
+  mov (a_r9), %r8
+  int $0x80
+  retq
+
+.section .data
+a_rdi: .quad 0
+a_rsi: .quad 0
+a_rdx: .quad 0
+a_rcx: .quad 0
+a_r8: .quad 0
+a_r9: .quad 0

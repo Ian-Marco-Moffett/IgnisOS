@@ -1,4 +1,5 @@
 #include <proc/proc.h>
+#include <proc/tss.h>
 #include <mm/heap.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>
@@ -8,8 +9,9 @@
 #include <lib/elf.h>
 #include <lib/string.h>
 #include <intr/syscall.h>
+#include <ipc/shmem.h>
 
-#define PROC_STACK_START 0x1000
+#define PROC_U_STACK_START 0x1000
 
 extern PAGEMAP root_pagemap;
 static size_t next_pid = 1;
@@ -23,101 +25,166 @@ static inline void fork_pml4(void* frame) {
 }
 
 
+__attribute__((naked)) void enter_ring3(uint64_t rip);
 
-static process_t* make_process(void) {
-  process_t* new_proc = kmalloc(sizeof(process_t));
+
+static void update_kernel_stack(uint64_t kstack_base) {
+  tss->rsp0Low = KSTACK_LOW(KSTACK_START_OFFSET(kstack_base));
+  tss->rsp0High = KSTACK_HIGH(KSTACK_START_OFFSET(kstack_base));
+}
+
+
+static void make_process(void) {
+  process_t* new_proc = kmalloc(sizeof(process_t));  
   new_proc->pid = next_pid++;
 
-  new_proc->stack_base = PROC_STACK_START;
-
-  new_proc->cr3 = (uint64_t)vmm_make_pml4();
-  new_proc->next = NULL; 
-  ASSERT(new_proc->cr3 != 0, "Process's cr3 is null.\n");
-  
-  ASMV("mov %0, %%cr3" :: "r" (new_proc->cr3));
-  mmap((void*)PROC_STACK_START, 1, PROT_READ | PROT_WRITE | PROT_USER);
-  new_proc->regs.rsp = new_proc->stack_base + (PAGE_SIZE/2);
-
-  return new_proc;
-}
-
-
-void proc_set_rsp(uint64_t rsp) {
-  running_process->regs.rsp = rsp;
-}
-
-
-_naked static void spawn_from_rip(void* rip, uint8_t push_task) { 
-  process_t* new_proc = make_process(); 
-  shmem_make_port(SPT_SYSCALL, 0x7000);
-  ASMV("mov %0, %%rsp" :: "r" (new_proc->regs.rsp) : "memory");
-
-  if (push_task) {
-    process_queue_head->next = new_proc;
-    process_queue_head = new_proc;
-    new_proc->regs.rflags = 0x202;
-    new_proc->regs.rip = (uint64_t)rip;
-  }
+  new_proc->ctx.cr3 = (uint64_t)vmm_make_pml4();
   
   /*
-   *  Make a syscall port
-   *  so this process
-   *  can make requests
-   *  to the kernel.
-   */
-  enter_ring3((uint64_t)rip);
-  __builtin_unreachable();
-}
-
-uint8_t proc_initrd_load(const char* path) { 
-  program_image_t unused;
-  ASMV("mov %0, %%cr3" :: "a" (root_pagemap));
-  void(*rip)(void) = elf_load(path, &unused);
-  spawn_from_rip(rip, 1);
-  return 0;
-}
-
-
-static void start_init(uint64_t rsp) {
-  /*
-   *  Load the initd binary, switch stacks
-   *  and enter ring 3.
+   *  Userstack is at a fixed virtual
+   *  address which is mapped to the 
+   *  process's address space.
+   *
+   *  ustack_phys_base: Physical address ustack_base 
+   *                    is mapped to.
    *
    */
-  program_image_t unused;
-  void(*initd)(void) = elf_load("initd.sys", &unused);
-  spawn_from_rip(initd, 0); 
-  while (1);
+  new_proc->ctx.ustack_base = PROC_U_STACK_START;
+  new_proc->ctx.ustack_phys_base = pmm_alloc_frame();
+  vmm_map_page((PAGEMAP*)new_proc->ctx.cr3, new_proc->ctx.ustack_phys_base, new_proc->ctx.ustack_base, PTE_PRESENT | PTE_WRITABLE | PTE_USER);
+
+
+  /*
+   *  Kernel stack is kmalloc'd.
+   *
+   *  So all we need to do is kmalloc
+   *  a page-sized buffer.
+   *
+   */
+
+  new_proc->ctx.kstack_base = (uint64_t)kmalloc(0x1000);
+
+  /*
+   *  Now stuff for the queue.
+   *
+   *  If we have no queue base,
+   *  then that means we are initializing 
+   *  proccess management.
+   *
+   *  Otherwise, just append new_proc
+   *  to the queue and things should
+   *  be good :)
+   *
+   *  Some notes:
+   *  Upon a task switch, the scheduler
+   *  has the responsibility to setup
+   *  values like:
+   *
+   *  tf->k_rsp
+   *  (where tf is a trapframe).
+   *
+   *  And switch to the next process's 
+   *  address space (loading CR3) etc (more explained
+   *  in the scheduler).
+   *
+   *
+   */
+
+  if (process_queue_base == NULL) {
+    process_queue_base = new_proc;
+    process_queue_head = new_proc;
+    running_process = new_proc;
+  } else {
+    process_queue_head->next = new_proc;
+    process_queue_head = process_queue_head->next;
+  }
 }
 
 
-void proc_switch(regs_t* regs) {
-  kmemcpy((uint8_t*)&running_process->regs, (uint8_t*)regs, sizeof(running_process->regs));
+void task_sched(struct trapframe* tf) {
+  /*
+   *  Alright, so we have gotten IRQ 0
+   *  and the trap handler has called task_sched().
+   *
+   *  task_sched() responsibility:
+   *
+   *  Copy over the old trapframe to the process
+   *  state and switch tasks, address space, TSS and rsp0.
+   *
+   *
+   */
 
-  // TODO: Allow SPT_GENERAL usage.
-  if (running_process->ports[SPT_SYSCALL].vaddr != NULL) {
-    uint64_t* port_shmem = running_process->ports[SPT_SYSCALL].vaddr;
-    if (*port_shmem != 0 && *port_shmem < MAX_SYSCALLS+1 && port_shmem[5] == 1) {
-      syscall_table[*port_shmem - 1](port_shmem);
-      *port_shmem = 0;
-    }
+  kmemcpy((uint8_t*)&running_process->tf, (uint8_t*)tf, sizeof(running_process->tf));
 
-  }
+  /*
+   *  Switch to the next process
+   *  and update tf->k_rsp.
+   *
+   */
 
-  if (running_process->next)
+  if (running_process->next != NULL)
     running_process = running_process->next;
   else
     running_process = process_queue_base;
 
-  kmemcpy((uint8_t*)regs, (uint8_t*)&running_process->regs, sizeof(running_process->regs));
+  running_process->tf.k_rsp = KSTACK_START_OFFSET(running_process->ctx.kstack_base);
+
+  /*
+   *  Copy over this task's trapframe state
+   *  to the main trapframe ptr.
+   *
+   *  We also need to update the TSS's
+   *  rsp0 values so we can switch to a 
+   *  new kernel stack during an interrupt.
+   *
+   *
+   */
+
+  kmemcpy((uint8_t*)tf, (uint8_t*)&running_process->tf, sizeof(running_process->tf));
+  update_kernel_stack(running_process->ctx.kstack_base);
 }
 
 
-void proc_init(void) { 
-  process_t* init = make_process();
-  process_queue_base = init;
-  process_queue_head = init;
-  running_process = init;
-  uint64_t rsp = init->stack_base + (PAGE_SIZE/2);
-  start_init(rsp);
+void proc_init(void) {
+  /*
+   *  Make a new process and queue.
+   */
+
+  make_process();
+
+  /*
+   *  Load initd.sys and setup
+   *  RIP and stuff.
+   *
+   */
+
+  program_image_t unused;
+  uint64_t rip = (uint64_t)elf_load("initd.sys", &unused);
+
+  /*
+   *  We shouldn't forget
+   *  to change the kernel rsp0
+   *  in the TSS so we can come 
+   *  back to kernelspace via
+   *  an interrupt.
+   *
+   *  Then finally we can switch to
+   *  userland.
+   *
+   */
+
+  update_kernel_stack(process_queue_base->ctx.kstack_base);
+ 
+  /*
+   *  Change CR3, setup a syscall shmem
+   *  port for this process and change RSP.
+   */
+  ASMV("mov %0, %%cr3" :: "a" (process_queue_base->ctx.cr3));
+
+  uint64_t rsp = PROC_U_STACK_START + (0x1000/2);
+  ASMV("mov %0, %%rsp" :: "a" (rsp));
+  
+  printk("[INFO]: InitD started..\n");
+  enter_ring3(rip);
+  __builtin_unreachable();
 }

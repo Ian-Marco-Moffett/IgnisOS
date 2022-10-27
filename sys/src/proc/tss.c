@@ -3,7 +3,7 @@
 #include <mm/heap.h>
 #include <lib/string.h>
 
-static struct TSSEntry* tss;
+struct TSSEntry* tss;
 
 
 void write_tss(void) {
@@ -13,10 +13,9 @@ void write_tss(void) {
   kmemzero(tss, sizeof(struct TSSEntry));
 
   uint64_t tss_base = (uint64_t)tss;
-  uint64_t kernel_stack = (uint64_t)(kmalloc(0x1000) + (0x1000/2));
 
-  tss->rsp0Low = kernel_stack & 0xFFFFFFFF;
-  tss->rsp0High = kernel_stack >> 32;
+  tss->rsp0Low = 0;
+  tss->rsp0High = 0;
 
   gdt_tss->seglimit = sizeof(struct TSSEntry);
   gdt_tss->g = 0;

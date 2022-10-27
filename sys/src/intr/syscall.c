@@ -7,16 +7,31 @@
 
 const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
 
+/*
+ *  Syscall arguments:
+ *
+ *  RAX,
+ *  RBX,
+ *  RCX,
+ *  RDI,
+ *  RSI,
+ *  R8,
+ *  R9,
+ *  R10,
+ *  R11,
+ *
+ */
+
 
 /*
  *  SYSCALL 0x0.
- *  args[1]: String.
+ *  RBX: STR.
  *
  *
  */
 
-static void sys_conout(uint64_t* args) {
-  const char* str = (const char*)args[1];
+static void sys_conout(struct trapframe* tf) {
+  const char* str = (const char*)tf->rbx;
 
   if (str == NULL)
     return;
@@ -33,29 +48,36 @@ static void sys_conout(uint64_t* args) {
 
 
 /*
- * args[1]: Driver ID string.
- * args[2]: Command.
- * args[3] to args[10]: IOCTL args (8 args max).
+ * RBX: Driver ID string.
+ * RCX: Command.
+ * RDI to R11: IOCTL args (6 args max).
  *
  *
  */
 
-static void sys_ioctl(uint64_t* args) {
-  if (args[1] == 0)
-    return;
-
-  driver_node_t* driver = uapi_locate_driver((const char*)args[1]);
+static void sys_ioctl(struct trapframe* tf) { 
+  driver_node_t* driver = uapi_locate_driver((const char*)tf->rbx);
 
   if (driver == NULL) {
     return;
   }
 
-  size_t ioctl_args[20] = {args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]};
-  driver->ioctl(args[2], ioctl_args);
+  size_t ioctl_args[20] = {
+    tf->rdi, tf->rsi, tf->r8,
+    tf->r9, tf->r10, tf->r11
+  };
+
+  driver->ioctl(tf->rcx, ioctl_args);
 }
 
 
-void(*syscall_table[MAX_SYSCALLS])(uint64_t* args) = {
-  sys_conout,       // 0x1.
-  sys_ioctl,        // 0x2.
+static void sys_launch(struct trapframe* tf) {
+  // make_process((const char*)args[1]);
+}
+
+
+void(*syscall_table[MAX_SYSCALLS])(struct trapframe* tf) = {
+  sys_conout,       // 0x0.
+  sys_ioctl,        // 0x1.
+  sys_launch,       // 0x2.
 };

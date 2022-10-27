@@ -1,11 +1,12 @@
 #ifndef SYSCALL_H_
 #define SYSCALL_H_
 
-#define MAX_SYSCALLS 2
+#define MAX_SYSCALLS 3
 
 #include <lib/types.h>
+#include <proc/proc.h>
 
-extern void(*syscall_table[MAX_SYSCALLS])(uint64_t* args);
+extern void(*syscall_table[MAX_SYSCALLS])(struct trapframe* tf);
 
 
 #endif

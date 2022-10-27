@@ -53,5 +53,6 @@ struct TSSDescriptor {
 void write_tss(void);
 void load_tss(void);
 
+extern struct TSSEntry* tss;
 
 #endif
