@@ -37,8 +37,14 @@ fi
 
 cd ../
 bash tools/mkinitrd.sh
-git clone https://github.com/limine-bootloader/limine.git --branch=v4.0-binary --depth=1
-make -C limine
+
+# Only build limine once
+if [[ ! -d limine ]]
+then
+  git clone https://github.com/limine-bootloader/limine.git --branch=v4.0-binary --depth=1
+  make -C limine
+fi
+
 rm -rf iso_root
 mkdir -p iso_root
 mkdir -p iso_root/Ignis
@@ -52,4 +58,3 @@ xorriso -as mkisofs -b limine-cd.bin \
 		iso_root -o Ignis.iso
 limine/limine-deploy Ignis.iso
 rm -rf iso_root
-rm -rf limine
