@@ -142,6 +142,7 @@ void task_sched(struct trapframe* tf) {
 
   kmemcpy((uint8_t*)tf, (uint8_t*)&running_process->tf, sizeof(running_process->tf));
   update_kernel_stack(running_process->ctx.kstack_base);
+  ASMV("mov %0, %%cr3" :: "a" (running_process->ctx.cr3));
 }
 
 

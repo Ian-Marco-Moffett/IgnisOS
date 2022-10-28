@@ -42,12 +42,17 @@ static void putstr(const char* str, uint64_t color) {
 void console_write(const char* fmt, va_list ap) {
   uint64_t color = MAKE_FG_BG(0x808080, 0x000000);
 
+  static uint8_t panic = 0;
+
   if (*fmt == '\\') {
     switch (*(fmt + 1)) {
       case '1':
-        framebuffer_clear(0x1434A4);
-        reset_pos();
-        color = MAKE_FG_BG(0xFFFFFF, 0x1434A4);
+        if (!(panic)) {
+          framebuffer_clear(0x0000000);
+          reset_pos();
+          panic = 1;
+        }
+        color = MAKE_FG_BG(0xFF0000, 0x000000);
         fmt += 2;
         break;
       case '2':

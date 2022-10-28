@@ -4,11 +4,11 @@
 #include <sys/ioctl.h>
 
 
-window_t kesswm_open_window(uint32_t x, uint32_t y) {
+window_t kesswm_open_window(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
   window_t window;
   window.x = x;
   window.y = y;
-  libgfx_open_window(x, y, 150, 150, DEFAULT_WINDOW_BG, DEFAULT_WINDOW_FG);
+  libgfx_open_window(x, y, width, height, DEFAULT_WINDOW_BG, DEFAULT_WINDOW_FG);
   return window;
 }
 
