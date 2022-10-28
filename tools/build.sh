@@ -36,7 +36,6 @@ fi
 
 
 cd ../
-rm -rf bfiles
 bash tools/mkinitrd.sh
 git clone https://github.com/limine-bootloader/limine.git --branch=v4.0-binary --depth=1
 make -C limine
