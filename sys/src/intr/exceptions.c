@@ -4,6 +4,7 @@
 #include <lib/types.h>
 #include <proc/proc.h>
 #include <lib/panic.h>
+#include <mm/vmm.h>
 
 #define INTR_END    \
   ASMV("cli; hlt"); \
@@ -93,8 +94,7 @@ _isr void __vec14(void* stackframe) {
   __asm__ __volatile__("cli");
   uint64_t cr2;
   ASMV("mov %%cr2, %0" : "=r" (cr2));
-  printk(PRINTK_PANIC "kpanic: Memory access violation at %x(PID %d)\n", cr2, running_process->pid);
-  printk(PRINTK_PANIC "error code: %x\n", (*(uint32_t*)stackframe));
+  printk(PRINTK_PANIC "kpanic: Memory access violation at %x (PID %d)\n", cr2, running_process->pid);
   INTR_END;
 }
 
