@@ -25,7 +25,7 @@ static inline void fork_pml4(void* frame) {
 }
 
 
-__attribute__((naked)) void enter_ring3(uint64_t rip);
+__attribute__((naked)) void enter_ring3(uint64_t rip, uint64_t rsp);
 
 
 static void update_kernel_stack(uint64_t kstack_base) {
@@ -155,9 +155,8 @@ void launch_exec(const char* path) {
   ASMV("mov %0, %%cr3" :: "a" (process_queue_head->ctx.cr3));
 
   uint64_t rsp = PROC_U_STACK_START + (0x1000/2);
-  ASMV("mov %0, %%rsp" :: "a" (rsp));
   running_process = process_queue_head;
-  enter_ring3(rip);
+  enter_ring3(rip, rsp);
 }
 
 
@@ -199,9 +198,8 @@ void proc_init(void) {
   ASMV("mov %0, %%cr3" :: "a" (process_queue_base->ctx.cr3));
 
   uint64_t rsp = PROC_U_STACK_START + (0x1000/2);
-  ASMV("mov %0, %%rsp" :: "a" (rsp));
   
   printk("[INFO]: InitD started..\n");
-  enter_ring3(rip);
+  enter_ring3(rip, rsp);
   __builtin_unreachable();
 }

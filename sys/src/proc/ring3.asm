@@ -11,7 +11,7 @@ enter_ring3:
   mov fs, ax
   mov gs, ax
 
-  mov rax, rsp
+  mov rax, rsi    ;; RSP.
   push 0x40 | 3
   push rax
   pushf
