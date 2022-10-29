@@ -53,9 +53,12 @@ char* dec2str(int number) {
 
 
 void kmemcpy(uint8_t* dst, const uint8_t* src, size_t len) {
-    for (size_t i = 0; i < len; ++i) {
-        dst[i] = src[i];
-    }
+  asm(
+    "cld\n"
+    "rep\n"
+    "movsb\n"
+    ::"c"(len), "S"(src), "D"(dst)
+  );
 }
 
 
@@ -113,21 +116,21 @@ uint8_t* kstrncpy(uint8_t *dst, const uint8_t *src, const uint8_t len) {
 
 
 void kmemzero(void* ptr, size_t n) {
-	char* ptr_ch = ptr;
-
-	for (size_t i = 0; i < n; ++i) {
-        // kprintf("A, %d\n", i);
-		ptr_ch[i] = 0;
-	}
+  asm(
+    "cld\n"
+    "rep\n"
+    "stosb\n"
+    ::"a"(0), "D"(ptr), "c"(n)
+  );
 }
 
-
 void kmemset(void* ptr, uint64_t data, size_t n) {
-    char* ptr_ch = ptr;
-
-	for (size_t i = 0; i < n; ++i) {
-		ptr_ch[i] = data;
-	}
+  asm(
+    "cld\n"
+    "rep\n"
+    "stosb\n"
+    ::"a"(data), "D"(ptr), "c"(n)
+  );
 }
 
 
