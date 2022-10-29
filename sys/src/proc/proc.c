@@ -109,7 +109,7 @@ void task_sched(struct trapframe* tf) {
    *  task_sched() responsibility:
    *
    *  Copy over the old trapframe to the process
-   *  state and switch tasks, address space, TSS and rsp0.
+   *  state and switch tasks, address space, TSS's rsp0.
    *
    *
    */
