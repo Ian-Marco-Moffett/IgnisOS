@@ -44,12 +44,13 @@ void framebuffer_ioctl(unsigned long cmd, size_t args[20]) {
         uint32_t fg = args[4];
 
         uint32_t x = orig_x;
+        uint32_t max_x = x + args[5];
 
         for (size_t i = 0; i < kstrlen(str); ++i) {
-          if (str[i] == '\n') {
+          if (str[i] == '\n' || (args[5] && (x + FONT_WIDTH) >= max_x)) {
             y += FONT_HEIGHT+4;
             x = orig_x;
-            continue;
+            if(str[i] == '\n') continue;
           }
           framebuffer_putch(x, y, str[i], bg, fg);
           x += FONT_WIDTH;

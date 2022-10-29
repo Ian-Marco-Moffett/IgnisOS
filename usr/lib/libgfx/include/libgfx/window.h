@@ -2,6 +2,8 @@
 #define __LIBGFX_WINDOW_H
 
 #define WINDOW_TRANSPARENT 1
+#define WINDOW_BAR_HEIGHT  20
+#define WINDOW_TITLEBAR_BG 0x5555FF
 
 #include <stdint.h>
 
