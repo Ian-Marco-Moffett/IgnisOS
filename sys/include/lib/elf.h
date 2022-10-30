@@ -472,6 +472,10 @@ typedef struct {
 typedef struct {
 	Elf64_Phdr* phdrs;
 	const char* elf_ptr;
+
+  // Virtual address ranges.
+  uint64_t prog_start;
+  uint64_t prog_end;
 } program_image_t;
 
 void* elf_load(const char* initrd_path, program_image_t* pimg);

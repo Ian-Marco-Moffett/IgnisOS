@@ -6,7 +6,6 @@
 #include <mm/mmap.h>
 #include <lib/log.h>
 #include <lib/assert.h>
-#include <lib/elf.h>
 #include <lib/string.h>
 #include <intr/syscall.h>
 #include <ipc/shmem.h>
@@ -127,7 +126,7 @@ void task_sched(struct trapframe* tf) {
   else
     running_process = process_queue_base;
 
-  running_process->tf.k_rsp = KSTACK_START_OFFSET(running_process->ctx.kstack_base);
+  // running_process->tf.k_rsp = KSTACK_START_OFFSET(running_process->ctx.kstack_base);
 
   /*
    *  Copy over this task's trapframe state
@@ -148,8 +147,7 @@ void task_sched(struct trapframe* tf) {
 
 void launch_exec(const char* path) {
   make_process();
-  program_image_t unused;
-  uint64_t rip = (uint64_t)elf_load(path, &unused);
+  uint64_t rip = (uint64_t)elf_load(path, &process_queue_head->img);
 
   update_kernel_stack(process_queue_head->ctx.kstack_base);
   ASMV("mov %0, %%cr3" :: "a" (process_queue_head->ctx.cr3));
@@ -173,8 +171,7 @@ void proc_init(void) {
    *
    */
 
-  program_image_t unused;
-  uint64_t rip = (uint64_t)elf_load("initd.sys", &unused);
+  uint64_t rip = (uint64_t)elf_load("initd.sys", &process_queue_base->img);
   ASSERT(rip != 0, "Could not load initd.sys!\n");
 
   /*

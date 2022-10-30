@@ -4,6 +4,7 @@
 #include <uapi/uapi.h>
 #include <lib/log.h>
 #include <intr/syscall.h>
+#include <mm/vmm.h>
 
 const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
 
@@ -37,13 +38,13 @@ const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
 
 static void sys_conout(struct trapframe* tf) {
   const char* str = (const char*)tf->rbx;
+  
+  /*
+   *  Deny if it is out of program range.
+   *
+   */
 
-  if (str == NULL)
-    return;
-
-  // I don't want it to be that easy to fake
-  // a kernel panic (seems like a silly thing to make easy).
-  if (str[0] == '\\' && str[1] == '1') {
+  if ((uint64_t)str < running_process->img.prog_start || ((uint64_t)str > running_process->img.prog_end)) {
     return;
   }
 

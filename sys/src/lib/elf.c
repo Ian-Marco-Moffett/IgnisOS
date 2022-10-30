@@ -93,9 +93,12 @@ void* elf_load(const char* initrd_path, program_image_t* pimg) {
     ((char*)prog_headers)[i] = elf_ptr[i];
   } 
 
+  pimg->prog_start = (uint64_t)header.e_entry;
+  pimg->prog_end = pimg->prog_start;
   for (Elf64_Phdr* phdr = prog_headers; (char*)phdr < (char*)prog_headers + header.e_phnum * header.e_phentsize; phdr = (Elf64_Phdr*)((char*)phdr + header.e_phentsize)) {
     if (phdr->p_type == PT_LOAD) {
       int n_pages = (phdr->p_memsz + 0x1000 - 1);
+      pimg->prog_end += (n_pages*PAGE_SIZE);
       Elf64_Addr segment = phdr->p_paddr;
 
       elf_ptr = (char*)ORIG_ELF_PTR + phdr->p_offset;

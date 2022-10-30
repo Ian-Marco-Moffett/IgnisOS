@@ -3,6 +3,7 @@
 
 #include <lib/types.h>
 #include <lib/asm.h>
+#include <lib/elf.h>
 #include <ipc/shmem.h>
 
 #define KSTACK_SIZE 0x1000
@@ -50,6 +51,7 @@ typedef struct Process {
   pid_t pid;
   struct trapframe tf;
   struct context ctx;
+  program_image_t img;
   uint64_t* ports[2];
   struct Process* next;
 } process_t;
