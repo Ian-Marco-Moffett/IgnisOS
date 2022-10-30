@@ -9,7 +9,7 @@ jobs:
    job:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v16
+      - uses: actions/checkout@v2
 
       - name: Build
         run: |
@@ -22,7 +22,7 @@ jobs:
           sudo apt-get -y install xorriso
           bash tools/build.sh
       - name: Uploading ISO as artifact
-        uses: actions/upload-artifact@v16
+        uses: actions/upload-artifact@v2
         with:
           name: IgnisOS
           path: Ignis.iso
