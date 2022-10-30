@@ -12,17 +12,19 @@
 static uint32_t last_keystroke = 0;
 
 
-void ps2_keyboard_ioctl(unsigned long cmd, size_t args[20]) {
+ssize_t ps2_keyboard_ioctl(unsigned long cmd, size_t args[20]) {
   switch (cmd) {
     case PS2_KEYBOARD_FETCH_KEY:
       /*
        *  args[0] must be a pointer to a buffer that will
        *  hold the keystroke.
        */
-
-      *((uint32_t*)args[0]) = last_keystroke;
-      break;
+      
+      // TODO  fix this.
+      return 0;
   }
+
+  return 0;
 }
 
 

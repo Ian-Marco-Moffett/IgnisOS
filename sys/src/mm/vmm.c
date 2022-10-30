@@ -139,6 +139,34 @@ uintptr_t vmm_get_phys(PAGEMAP* pml4, uintptr_t virt) {
 }
 
 
+void vmm_update_flags(PAGEMAP* pml4, uintptr_t virt, size_t flags) {
+  // Fetch indexes.
+  size_t index4 = (virt & ((size_t)0x1FF << 39)) >> 39;
+  size_t index3 = (virt & ((size_t)0x1FF << 30)) >> 30;
+  size_t index2 = (virt & ((size_t)0x1FF << 21)) >> 21;
+  size_t index1 = (virt & ((size_t)0x1FF << 12)) >> 12;
+
+  uintptr_t* pml3 = _get_next_level(pml4, index4);  
+
+  if (pml3 == NULL)
+    return;
+
+  uintptr_t* pml2 = _get_next_level(pml3, index3);
+
+  if (pml2 == NULL)
+    return;
+
+  uintptr_t* page_table = _get_next_level(pml2, index2);
+
+  if (page_table == NULL)
+    return;
+  
+  page_table[index1] &= ~(0b111 | PTE_NX);
+  page_table[index1] |= flags;
+  __tlb_flush_single(virt);
+}
+
+
 void vmm_init(void) {
   ASMV("mov %%cr3, %0" : "=r" (root_pagemap) :: "memory");
 }

@@ -15,6 +15,6 @@ void framebuffer_clear(uint32_t color);
 void framebuffer_init(void);
 uint32_t framebuffer_get_height(void);
 uint32_t framebuffer_get_width(void);
-void framebuffer_ioctl(unsigned long cmd, size_t args[20]);
+ssize_t framebuffer_ioctl(unsigned long cmd, size_t args[20]);
 
 #endif

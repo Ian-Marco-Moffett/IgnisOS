@@ -53,28 +53,25 @@ static void sys_conout(struct trapframe* tf) {
 
 
 /*
- * RBX: Driver ID string.
+ * RBX: Driver ID.
  * RCX: Command.
  * RDX to R13: Args.
  *
  *
  */
 
-static void sys_ioctl(struct trapframe* tf) { 
-  driver_node_t* driver = uapi_locate_driver((const char*)tf->rbx);
-
-  if (driver == NULL) {
-    return;
-  } 
-  
+static void sys_ioctl(struct trapframe* tf) {
   size_t ioctl_args[20] = {
     tf->rdx, tf->rsi, tf->rdi,
     tf->r8, tf->r9, tf->r10,
     tf->r11, tf->r12, tf->r13
   };
 
-  driver->ioctl(tf->rcx, ioctl_args);
-
+  switch (tf->rbx) {
+    case DRIVER_FRAMEBUFFER:
+      tf->rax = framebuffer_ioctl(tf->rcx, ioctl_args);
+      break;
+  } 
 }
 
 /*

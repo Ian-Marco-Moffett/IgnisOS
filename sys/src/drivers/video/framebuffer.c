@@ -25,7 +25,7 @@ static uint32_t _framebuffer_get_index(uint32_t x, uint32_t y) {
   return x + y * (framebuffer->pitch/4);
 }
 
-void framebuffer_ioctl(unsigned long cmd, size_t args[20]) {
+ssize_t framebuffer_ioctl(unsigned long cmd, size_t args[20]) {
   switch (cmd) {
     case FRAMEBUFFER_IOCTL_CLEAR:
       framebuffer_clear(args[0]);
@@ -57,6 +57,8 @@ void framebuffer_ioctl(unsigned long cmd, size_t args[20]) {
       }
       break;
   }
+
+  return 0;
 }
 
 
