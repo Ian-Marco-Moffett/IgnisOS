@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define DEFAULT_WINDOW_BG 0xC3C3C3
-#define DEFAULT_WINDOW_FG 0x000082
+#define DEFAULT_WINDOW_BG 0xEBDBB2
+#define DEFAULT_WINDOW_FG 0x458588
 
 
 typedef struct {
@@ -13,7 +13,7 @@ typedef struct {
 } window_t;
 
 
-window_t kesswm_open_window(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+window_t kesswm_open_window(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const char* title);
 void kesswm_putstr(window_t window, const char* str);
 
 
