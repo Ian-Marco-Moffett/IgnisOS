@@ -20,7 +20,7 @@ jobs:
           sudo apt-get -y install git
           sudo apt-get -y install nasm
           sudo apt-get -y install xorriso
-          bash build.sh
+          bash tools/build.sh
       - name: Uploading ISO as artifact
         uses: actions/upload-artifact@v2
         with:
