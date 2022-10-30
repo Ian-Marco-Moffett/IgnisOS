@@ -7,6 +7,7 @@
 #define FRAMEBUFFER_IOCTL_CLEAR 0
 #define FRAMEBUFFER_IOCTL_PUTPIX 1
 #define FRAMEBUFFER_IOCTL_PUTSTR 2
+#define FRAMEBUFFER_GET_PIXEL 3
 
 
 void framebuffer_putpix(uint32_t x, uint32_t y, uint32_t color);

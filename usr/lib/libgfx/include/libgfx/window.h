@@ -1,8 +1,6 @@
 #ifndef __LIBGFX_WINDOW_H
 #define __LIBGFX_WINDOW_H
 
-#define WINDOW_TRANSPARENT 1
-
 #include <stdint.h>
 
 
