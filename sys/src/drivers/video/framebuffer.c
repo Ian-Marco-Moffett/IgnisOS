@@ -19,7 +19,7 @@ static struct Font {
   .data = (uint16_t*)DEFAULT_FONT_DATA
 };
 
-static struct limine_framebuffer* framebuffer = NULL;
+struct limine_framebuffer* framebuffer = NULL;
 
 static uint32_t _framebuffer_get_index(uint32_t x, uint32_t y) {
   return x + y * (framebuffer->pitch/4);
@@ -64,6 +64,8 @@ ssize_t framebuffer_ioctl(unsigned long cmd, size_t args[20]) {
       break;
     case FRAMEBUFFER_GET_PIXEL:
       return getpix(args[0], args[1]);
+    case FRAMEBUFFER_GET_PITCH:
+      return framebuffer->pitch;
   }
 
   return 0;
@@ -75,6 +77,13 @@ void framebuffer_putpix(uint32_t x, uint32_t y, uint32_t color) {
     return;
 
   ((uint32_t*)framebuffer->address)[_framebuffer_get_index(x, y)] = color;
+}
+
+
+void framebuffer_mirror(uint32_t* buf) {
+  for (size_t i = 0; i < (framebuffer->pitch*framebuffer->height)/2; ++i) {
+    ((uint32_t*)framebuffer->address)[i] = buf[i]; 
+  }
 }
 
 

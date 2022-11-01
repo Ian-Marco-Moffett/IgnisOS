@@ -10,11 +10,12 @@
 typedef struct {
   uint16_t x;
   uint16_t y;
+  uint32_t cursor_x_off;
+  uint32_t cursor_y_off;
 } window_t;
 
 
 window_t kesswm_open_window(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const char* title);
-void kesswm_putstr(window_t window, const char* str);
-
+void kesswm_putstr(window_t* window, const char* str, uint32_t x, uint32_t y, uint8_t use_cursor_off);
 
 #endif

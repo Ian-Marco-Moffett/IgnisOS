@@ -12,7 +12,7 @@
 #include <proc/tss.h>
 #include <firmware/acpi/acpi.h>
 
-#define N_HEAP_PAGES 7
+#define N_HEAP_PAGES 0x3
 
 #ifdef __x86_64__
 #include <arch/x64/idt.h>

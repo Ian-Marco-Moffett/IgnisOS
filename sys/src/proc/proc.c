@@ -9,6 +9,7 @@
 #include <lib/string.h>
 #include <intr/syscall.h>
 #include <ipc/shmem.h>
+#include <drivers/video/framebuffer.h>
 
 #define PROC_U_STACK_START 0x1000
 
@@ -108,7 +109,8 @@ void task_sched(struct trapframe* tf) {
    *  task_sched() responsibility:
    *
    *  Copy over the old trapframe to the process
-   *  state and switch tasks, address space, TSS's rsp0.
+   *  state and switch tasks, check if things need to be done
+   *  with the process, change address space and TSS's rsp0.
    *
    *
    */
@@ -126,8 +128,6 @@ void task_sched(struct trapframe* tf) {
   else
     running_process = process_queue_base;
 
-  // running_process->tf.k_rsp = KSTACK_START_OFFSET(running_process->ctx.kstack_base);
-
   /*
    *  Copy over this task's trapframe state
    *  to the main trapframe ptr.
@@ -142,16 +142,38 @@ void task_sched(struct trapframe* tf) {
   kmemcpy((uint8_t*)tf, (uint8_t*)&running_process->tf, sizeof(running_process->tf));
   update_kernel_stack(running_process->ctx.kstack_base);
   ASMV("mov %0, %%cr3" :: "a" (running_process->ctx.cr3));
+
+  if (running_process->ctx.framebuffer_mirror != NULL) {
+    framebuffer_mirror(running_process->ctx.framebuffer_mirror);
+  }
 }
 
 
-void launch_exec(const char* path) {
+void launch_exec(const char* path, pperm_t pmask) {
+  if (pmask != 0 && !(running_process->pmask & PPERM_PERM))
+    return;
+
   make_process();
   uint64_t rip = (uint64_t)elf_load(path, &process_queue_head->img);
 
   update_kernel_stack(process_queue_head->ctx.kstack_base);
   ASMV("mov %0, %%cr3" :: "a" (process_queue_head->ctx.cr3));
-  create_process_heap(0xB8000, 1, &process_queue_head->ctx.heap_ctx);
+
+  /*
+   *  Allocate memory for the process's 
+   *  framebuffer mirror if it has access
+   *  to the framebuffer.
+   *
+   */
+  if (pmask & PPERM_FRAMEBUFFER) {
+    create_process_heap(0x7000, (framebuffer->pitch*framebuffer->height)/PAGE_SIZE, &process_queue_head->ctx.heap_ctx);
+    process_queue_head->ctx.framebuffer_mirror = __malloc(framebuffer->pitch*framebuffer->height, &process_queue_head->ctx.heap_ctx);
+    
+    if (process_queue_head->ctx.framebuffer_mirror != NULL)
+      kmemzero(process_queue_head->ctx.framebuffer_mirror, framebuffer->pitch*framebuffer->height);
+  } else {
+    create_process_heap(0x7000, 3, &process_queue_head->ctx.heap_ctx);
+  }
 
   uint64_t rsp = PROC_U_STACK_START + (0x1000/2);
   running_process = process_queue_head;
@@ -165,6 +187,7 @@ void proc_init(void) {
    */
 
   make_process();
+  process_queue_base->pmask |= PPERM_INITRD | PPERM_PERM;
 
   /*
    *  Load initd.sys and setup

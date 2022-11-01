@@ -78,11 +78,12 @@ static void sys_ioctl(struct trapframe* tf) {
 /*
  *  Loads a process from the initrd.
  *  RBX: Path.
+ *  RCX: Permissions mask.
  *
  */
 
 static void sys_launch(struct trapframe* tf) {
-  launch_exec((const char*)tf->rbx);
+  launch_exec((const char*)tf->rbx, tf->rcx);
 }
 
 
