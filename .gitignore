@@ -3,5 +3,6 @@
 *.iso
 *.log
 *.a
+*.img
 bfiles/
 limine/
