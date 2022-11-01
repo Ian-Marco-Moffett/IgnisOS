@@ -11,22 +11,17 @@
 #define MAGIC 0xCA7F00D
 
 
-typedef struct _HeapBlk {
-  uint32_t magic;
-  uint8_t state : 1;
-  size_t size;
-  struct _HeapBlk* next;
-} heapblk_t;
+
+static struct heap_context kctx = {
+  .bytes_allocated = 0,
+  .heap_size = 0,
+  .head = NULL,
+  .tail = NULL
+};
 
 
-static heapblk_t* heap_head = NULL;
-static heapblk_t* heap_tail = NULL;
-static size_t heap_size = 0;
-static size_t bytes_allocated = 0;
-
-
-static heapblk_t* first_fit(size_t size) {
-  heapblk_t* block = heap_tail;
+static heapblk_t* first_fit(size_t size, struct heap_context ctx) {
+  heapblk_t* block = ctx.tail;
 
   while (block != NULL) {
     if (block->state == FREE && block->size >= size) {
@@ -40,56 +35,39 @@ static heapblk_t* first_fit(size_t size) {
 }
 
 
-void create_heap(uintptr_t vaddr_start, size_t n_pages) {  
-  mmap((void*)vaddr_start, n_pages, PROT_READ | PROT_WRITE); 
-  heap_size = n_pages*PAGE_SIZE;
-  heap_head = (heapblk_t*)vaddr_start;
-  heap_head->size = 0;
-  heap_head->next = NULL;
-  heap_head->state = USED;
-  heap_head->magic = MAGIC;
-  heap_tail = heap_head;
-}
-
-
-void* kmalloc(size_t size) { 
-  if (bytes_allocated + size > heap_size || size == 0) {
-    return NULL;
-  }
-  
-  // Ensure there is no heap corruption.
-  ASSERT(heap_head->magic == MAGIC, "Kernel heap corruption detected, panicked.\n");
-  ASSERT(heap_tail->magic == MAGIC, "Kernel heap corruption detected, panicked.\n");
-
-  if (bytes_allocated >= heap_size) {
+void* __malloc(size_t size, struct heap_context* ctx) {
+  if (ctx->bytes_allocated + size > ctx->heap_size || size == 0) {
     return NULL;
   }
 
-  heapblk_t* region = first_fit(size);
+  if (ctx->head->magic != MAGIC || ctx->tail->magic != MAGIC) {
+    // TODO: On heap corruption, kill the process.
+    return NULL;
+  }
 
+  heapblk_t* region = first_fit(size, *ctx);
   if (region == NULL) {
-    char* next = DATA_START(heap_head + heap_head->size);
-    heap_head->next = (heapblk_t*)next;
-    region = heap_head->next;
+    char* next = DATA_START(ctx->head + ctx->head->size);
+    ctx->head->next = (heapblk_t*)next;
+    region = ctx->head->next;
     region->next = NULL;
     region->state = USED;
     region->magic = MAGIC;
     region->size = size;
-    heap_head = region;
-    heap_tail = heap_head;
+    ctx->head = region;
+    ctx->tail = ctx->head;
   }
 
-  bytes_allocated += size;
+  ctx->bytes_allocated += size;
   return DATA_START(region);
 }
 
 
-void kfree(void* ptr) {
+void __free(void* ptr, struct heap_context* ctx) {
   heapblk_t* region = ptr - sizeof(heapblk_t);
 
-  if (region->magic != MAGIC) {
+  if (region->magic != MAGIC)
     return;
-  }
 
   heapblk_t* cur = region;
 
@@ -98,7 +76,40 @@ void kfree(void* ptr) {
     cur = cur->next;
   }
 
-  heap_tail = region;
+  ctx->tail = region;
+}
+
+
+void create_heap(uintptr_t vaddr_start, size_t n_pages) {  
+  mmap((void*)vaddr_start, n_pages, PROT_READ | PROT_WRITE); 
+  kctx.heap_size = n_pages*PAGE_SIZE;
+  kctx.head = (heapblk_t*)vaddr_start;
+  kctx.head->size = 0;
+  kctx.head->next = NULL;
+  kctx.head->state = USED;
+  kctx.head->magic = MAGIC;
+  kctx.tail = kctx.head;
+}
+
+
+void create_process_heap(uintptr_t vaddr_start, size_t n_pages, struct heap_context* p_heapctx) {
+  mmap((void*)vaddr_start, n_pages, PROT_READ | PROT_WRITE | PROT_USER);
+  p_heapctx->heap_size = n_pages*PAGE_SIZE;
+  p_heapctx->head = (heapblk_t*)vaddr_start;
+  p_heapctx->head->size = 0;
+  p_heapctx->head->next = NULL;
+  p_heapctx->head->state = USED;
+  p_heapctx->head->magic = MAGIC;
+  p_heapctx->tail = kctx.head;
+}
+
+
+void* kmalloc(size_t size) {
+  return __malloc(size, &kctx);
+}
+
+void kfree(void* ptr) {
+  __free(ptr, &kctx);
 }
 
 void* krealloc(void* oldptr, size_t newsize) {

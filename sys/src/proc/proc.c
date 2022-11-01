@@ -151,6 +151,7 @@ void launch_exec(const char* path) {
 
   update_kernel_stack(process_queue_head->ctx.kstack_base);
   ASMV("mov %0, %%cr3" :: "a" (process_queue_head->ctx.cr3));
+  create_process_heap(0xB8000, 1, &process_queue_head->ctx.heap_ctx);
 
   uint64_t rsp = PROC_U_STACK_START + (0x1000/2);
   running_process = process_queue_head;
@@ -193,6 +194,7 @@ void proc_init(void) {
    *  port for this process and change RSP.
    */
   ASMV("mov %0, %%cr3" :: "a" (process_queue_base->ctx.cr3));
+  create_process_heap(0xB8000, 1, &process_queue_base->ctx.heap_ctx);
 
   uint64_t rsp = PROC_U_STACK_START + (0x1000/2);
   

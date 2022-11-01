@@ -5,6 +5,7 @@
 #include <lib/asm.h>
 #include <lib/elf.h>
 #include <ipc/shmem.h>
+#include <mm/heap.h>
 
 #define KSTACK_SIZE 0x1000
 #define KSTACK_START_OFFSET(stack_base) (stack_base+(KSTACK_SIZE/2))
@@ -45,6 +46,7 @@ struct context {
   uint64_t ustack_base;
   uint64_t ustack_phys_base;
   uint64_t kstack_base;
+  struct heap_context heap_ctx;
 };
 
 typedef struct Process {
