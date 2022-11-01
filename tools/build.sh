@@ -45,6 +45,13 @@ then
   make -C limine
 fi
 
+if [[ ! -f meta/disk.img ]]
+then
+  echo "CREATING DISK IMAGE.."
+  qemu-img create meta/disk.img 1M
+fi
+
+
 rm -rf iso_root
 mkdir -p iso_root
 mkdir -p iso_root/Ignis

@@ -21,6 +21,7 @@
 #include <arch/x86/gdt.h>
 #include <drivers/serial.h>
 #include <drivers/pit.h>
+#include <drivers/hdd/ata.h>
 #endif
 
 static void init_memory_managers(void) {
@@ -72,7 +73,8 @@ void _start(void) {
 
   fs_init();
   printk("[INFO]: File systems initialized.\n"); 
-
+ 
+  ata_init(); 
 #ifdef __x86_64__
   init_pit();
   printk("[INFO]: PIT initialized.\n");
