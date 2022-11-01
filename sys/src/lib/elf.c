@@ -64,7 +64,8 @@ static uint8_t is_supported(Elf64_Ehdr hdr) {
 
 
 void* elf_load(const char* initrd_path, program_image_t* pimg) {
-  const char* elf_ptr = initrd_open(initrd_path);
+  size_t unused;
+  const char* elf_ptr = initrd_open(initrd_path, &unused);
   const char* const ORIG_ELF_PTR = elf_ptr;
 
   if (elf_ptr == NULL) {

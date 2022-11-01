@@ -110,8 +110,10 @@ void ata_write(uint16_t* in_buf, uint32_t lba, uint16_t sector_count) {
     wait_drq();
 
     for (uint16_t j = 0; j < 256; ++j) {
-      outportl(0x1F0, in_buf[j]);
+      outportw(0x1F0, in_buf[j]);
     }
+
+    in_buf += 256;
   }
 }
 

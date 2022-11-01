@@ -1,5 +1,3 @@
-AARCH64=false
-
 failure() {
   echo -e "\n\nFIX YOUR ERRORS DUDE!\n"
   cd ../
@@ -19,22 +17,8 @@ mkdir -p meta/internals/
 mkdir -p meta/initrd/
 mkdir -p bfiles/
 bash tools/mklib.sh
-if [ $AARCH64 = true ]
-then
-  export ASM="aarch64-elf-as"
-  firmware
-  cd bfiles/; cmake -DAARCH64=1 ../ $@; make || failure
-  cd ../
-  bash tools/mkinitrd.sh
-  bash tools/mkiso.sh
-  rm -rf bfiles iso_root limine
-  exit
-else
-  export ASM="nasm -felf64"
-  cd bfiles/; cmake ../ $@; make || failure
-fi
-
-
+export ASM="nasm -felf64"
+cd bfiles/; cmake -DLIVE=1 ../ $@; make || failure
 cd ../
 bash tools/mkinitrd.sh
 
@@ -55,6 +39,20 @@ fi
 rm -rf iso_root
 mkdir -p iso_root
 mkdir -p iso_root/Ignis
+cp etc/limine-live.cfg ./
+mv limine-live.cfg limine.cfg
+cp limine.cfg \
+limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
+cp sys/kernel-live.sys meta/internals/* iso_root/Ignis/
+xorriso -as mkisofs -b limine-cd.bin \
+		-no-emul-boot -boot-load-size 4 -boot-info-table \
+		--efi-boot limine-cd-efi.bin \
+		-efi-boot-part --efi-boot-image --protective-msdos-label \
+		iso_root -o IgnisInstaller.iso
+limine/limine-deploy IgnisInstaller.iso
+
+
+# Build actual system ISO.
 cp etc/limine.cfg \
 limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
 cp sys/kernel.sys meta/internals/* iso_root/Ignis/
@@ -62,6 +60,6 @@ xorriso -as mkisofs -b limine-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot limine-cd-efi.bin \
 		-efi-boot-part --efi-boot-image --protective-msdos-label \
-		iso_root -o Ignis.iso
-limine/limine-deploy Ignis.iso
-rm -rf iso_root
+		iso_root -o meta/initrd/Ignis.iso
+limine/limine-deploy meta/initrd/Ignis.iso
+# rm -rf iso_root

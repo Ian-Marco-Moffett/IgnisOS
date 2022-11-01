@@ -9,6 +9,6 @@
  *
  */
 
-const char* initrd_open(const char* path);
+const char* initrd_open(const char* path, size_t* size_out);
 
 #endif

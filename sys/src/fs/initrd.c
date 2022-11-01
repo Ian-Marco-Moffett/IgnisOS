@@ -40,7 +40,7 @@ static void _init(void) {
   }
 }
 
-const char* initrd_open(const char* path) {
+const char* initrd_open(const char* path, size_t* size_out) {
   if (initrd == NULL) {
     _init();
   }
@@ -55,6 +55,7 @@ const char* initrd_open(const char* path) {
   while (header->filename[0] != '\0') {
     header = (struct TarHeader*)addr;
     size_t sz = _getsize(header->size);
+    *size_out = sz;
 
     if (kstrcmp(header->filename, path) == 0) {
       return ((char*)addr) + 0x200;

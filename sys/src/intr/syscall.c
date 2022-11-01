@@ -3,8 +3,13 @@
 #include <lib/types.h>
 #include <uapi/uapi.h>
 #include <lib/log.h>
+#include <lib/panic.h>
 #include <intr/syscall.h>
 #include <mm/vmm.h>
+#include <fs/initrd.h>
+#ifdef __IGNIS_LIVE_ISO
+#include <drivers/hdd/ata.h>
+#endif
 
 const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
 
@@ -85,9 +90,33 @@ static void sys_launch(struct trapframe* tf) {
   launch_exec((const char*)tf->rbx);
 }
 
+/*
+ *  TODO: Get rid of this later.
+ *  NOTE: Keep at last syscall entry.
+ *
+ *
+ */
+
+#ifdef __IGNIS_LIVE_ISO
+static void sys_disk_install(struct trapframe* tf) {
+  size_t size;
+  const char* system = initrd_open("Ignis.iso", &size);
+
+  if (system == NULL || size == 0) {
+    printk(PRINTK_PANIC "kpanic: %s failure.\n", __func__);
+    kpanic();
+  }
+  
+  ata_write((uint16_t*)system, 0, size);
+}
+#endif
+
 
 void(*syscall_table[MAX_SYSCALLS])(struct trapframe* tf) = {
   sys_conout,       // 0x0.
   sys_ioctl,        // 0x1.
   sys_launch,       // 0x2.
+#ifdef __IGNIS_LIVE_ISO
+  sys_disk_install, // 0x3.
+#endif
 };
