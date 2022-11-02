@@ -4,7 +4,6 @@
 #include <lib/types.h>
 #include <lib/asm.h>
 #include <lib/elf.h>
-#include <ipc/shmem.h>
 #include <mm/heap.h>
 #include <proc/perm.h>
 
@@ -57,7 +56,6 @@ typedef struct Process {
   struct trapframe tf;
   struct context ctx;
   program_image_t img;
-  uint64_t* ports[2];
   struct Process* next;
 } process_t;
 

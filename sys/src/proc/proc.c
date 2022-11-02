@@ -8,7 +8,6 @@
 #include <lib/assert.h>
 #include <lib/string.h>
 #include <intr/syscall.h>
-#include <ipc/shmem.h>
 #include <drivers/video/framebuffer.h>
 
 #define PROC_U_STACK_START 0x1000
