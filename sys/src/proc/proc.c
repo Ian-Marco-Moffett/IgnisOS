@@ -36,6 +36,11 @@ void proc_init(void) {
   size_t core_count = smp_get_core_count();
   cores = kmalloc(sizeof(struct core) * core_count);
   ASSERT(cores != NULL, "Could not allocate memory for corelist.\n");
+  
+  /*
+   *  Initialize all core
+   *  descriptors.
+   */
 
   for (size_t i = 0; i < core_count; ++i) {
     cores[i].index = i;
