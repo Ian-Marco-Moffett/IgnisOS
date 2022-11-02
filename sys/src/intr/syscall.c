@@ -37,19 +37,21 @@ const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
  */
 
 static void sys_conout(struct trapframe* tf) {
-  const char* str = (const char*)tf->rbx;
+  // const char* str = (const char*)tf->rbx;
   
   /*
    *  Deny if it is out of program range.
    *
    */
-
+  
+  /*
   if ((uint64_t)str < running_process->img.prog_start || ((uint64_t)str > running_process->img.prog_end)) {
     return;
   }
 
   va_list ap;
   console_write(str, ap);
+  */
 }
 
 
@@ -83,12 +85,12 @@ static void sys_ioctl(struct trapframe* tf) {
  */
 
 static void sys_launch(struct trapframe* tf) {
-  launch_exec((const char*)tf->rbx, tf->rcx);
+  // launch_exec((const char*)tf->rbx, tf->rcx);
 }
 
 
 void(*syscall_table[MAX_SYSCALLS])(struct trapframe* tf) = {
   sys_conout,       // 0x0.
   sys_ioctl,        // 0x1.
-  sys_launch,       // 0x2.
+  // sys_launch,       // 0x2.
 };

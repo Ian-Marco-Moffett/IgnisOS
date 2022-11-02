@@ -4,6 +4,9 @@
 #include <lib/types.h>
 #include <lib/limine.h>
 
+#define VMM_LOAD_CR3(cr3) \
+  __asm__ __volatile__("mov %0, %%cr3" :: "a" (cr3))
+
 #define PTE_ADDR_MASK 0x000FFFFFFFFFF000
 #define PTE_PRESENT (1ull << 0)
 #define PTE_WRITABLE (1ull << 1)

@@ -59,15 +59,20 @@ typedef struct Process {
   struct Process* next;
 } process_t;
 
+struct core {
+  uint32_t index;
+  uint32_t lapic_id;
+  size_t n_running_tasks;
+  process_t* queue_head;
+  process_t* queue_base;
+  process_t* running;
+  // For scheduling.
+  uint32_t dice;
+};
+
 
 void proc_init(void);
 void task_sched(struct trapframe* tf);
 void launch_exec(const char* path, pperm_t pmask);
-
-
-extern process_t* process_queue_head;
-extern process_t* process_queue_base;
-extern process_t* running_process;
-
 
 #endif
