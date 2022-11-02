@@ -67,12 +67,20 @@ struct core {
   process_t* queue_base;
   process_t* running;
   // For scheduling.
-  uint32_t dice;
+  uint32_t roll;
 };
 
 
 void proc_init(void);
 void task_sched(struct trapframe* tf);
 void launch_exec(const char* path, pperm_t pmask);
+
+/*
+ *  Returns the currently running process
+ *  on the core that executes this function.
+ *
+ */
+
+process_t* get_running_process(void);
 
 #endif

@@ -1,6 +1,6 @@
 #include <lib/rand.h>
 
-static size_t seed = 7;
+static size_t seed = 20;
 
 void srand(uint8_t _seed) {
   seed = _seed;

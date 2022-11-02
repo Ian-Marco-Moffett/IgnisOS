@@ -66,6 +66,14 @@ static void write(uint16_t reg, uint32_t value) {
   *(volatile uint32_t*)(lapic_base + reg) = value;
 }
 
+static uint32_t read(uint16_t reg) {
+  return *(volatile uint32_t*)(lapic_base + reg);
+}
+
+uint32_t lapic_read_id(void) {
+  return read(LAPIC_ID);
+}
+
 void lapic_send_eoi(void) {
   write(LAPIC_EOI, 0);
 }
