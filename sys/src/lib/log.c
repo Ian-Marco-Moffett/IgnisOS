@@ -40,10 +40,11 @@ void printk(const char* fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   console_write(fmt, ap);
+  va_end(ap);
 
 #ifdef __x86_64__
+  va_start(ap, fmt);
   serial_log(fmt, ap);
-#endif
-
   va_end(ap);
+#endif
 }
