@@ -8,5 +8,10 @@
 #define _naked __attribute__((naked))
 #define _isr _noreturn
 
+#define HLT_SLEEP \
+  for (unsigned long long i = 0; i < 99999999999999; ++i) {           \
+    ASMV("hlt");                                                      \
+  }
+
 
 #endif
