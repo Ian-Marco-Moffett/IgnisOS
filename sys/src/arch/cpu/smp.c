@@ -48,6 +48,11 @@ void smp_init(void) {
   core_count = smp_resp->cpu_count;
   printk(PRINTK_CLEAR "[INFO]: CPU has %d %s.\n", core_count, core_count > 1 ? "cores" : "core");
 
+  if (core_count == 1) {
+    printk(PRINTK_PANIC "kpanic: System only has 1 core. IgnisOS requires at least 2 cores!\n");
+    kpanic();
+  }
+
   lapic_id_list = kmalloc(sizeof(size_t)*core_count);
 
   for (size_t i = 0; i < smp_resp->cpu_count; ++i) {
