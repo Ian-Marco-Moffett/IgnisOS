@@ -3,7 +3,8 @@
 
 #define GDT_TSS 0x9
 
-static struct GDTDesc gdt[] = {
+
+struct GDTDesc base_gdt[] = {
     {0}, 
 
     {
@@ -85,15 +86,9 @@ static struct GDTDesc gdt[] = {
 };
 
 
+/*
 static struct GDTR gdtr = {
   sizeof(gdt) - 1,
   (uintptr_t)gdt
 };
-
-
-struct TSSDescriptor* gdt_tss = (struct TSSDescriptor*)&gdt[GDT_TSS];
-
-
-void load_gdt(void) {
-    __asm__ __volatile__("lgdt %0" :: "m" (gdtr));
-}
+*/

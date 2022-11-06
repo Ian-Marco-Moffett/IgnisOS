@@ -2,9 +2,11 @@
 #define GDT_H
 
 #include <lib/types.h>
+#include <proc/proc.h>
 
 #define KERNEL_CODE 0x28
 #define KERNEL_DATA 0x30
+#define LGDT(gdtr) __asm__ __volatile__("lgdt %0" :: "m" (gdtr))
 
 struct GDTR {
   uint16_t limit;
@@ -21,6 +23,6 @@ struct GDTDesc {
   uint8_t  base_hi;
 } __attribute__((packed));
 
-void load_gdt(void);
+extern struct GDTDesc base_gdt[];
 
 #endif

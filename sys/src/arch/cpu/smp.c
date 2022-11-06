@@ -47,7 +47,6 @@ void smp_init(void) {
   cores = smp_resp->cpus;
   core_count = smp_resp->cpu_count;
   printk(PRINTK_CLEAR "[INFO]: CPU has %d %s.\n", core_count, core_count > 1 ? "cores" : "core");
-  printk("[INFO]: Starting up APs..\n");
 
   lapic_id_list = kmalloc(sizeof(size_t)*core_count);
 

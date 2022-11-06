@@ -50,7 +50,6 @@ struct TSSDescriptor {
 } __attribute__((packed));
 
 
-void write_tss(void);
 void load_tss(void);
 
 extern struct TSSEntry* tss;

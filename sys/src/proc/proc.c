@@ -220,15 +220,52 @@ static void __processor_idle(void) {
 static void __processor_startup_routine(struct limine_smp_info* info) {
   struct core* core = (struct core*)info->extra_argument;
 
-  load_idt();
-  intr_init();
+  /*
+   *  Setup the global descriptor table
+   *  for the current processor.
+   *
+   */
 
-  load_gdt();
-  write_tss();
+  size_t gdt_size = sizeof(struct GDTDesc) * 11;
+  core->gdt = kmalloc(gdt_size);
+  core->gdtr = kmalloc(sizeof(struct GDTR));
+  kmemcpy((uint8_t*)core->gdt, (uint8_t*)base_gdt, gdt_size);
+  core->gdtr->limit = gdt_size;
+  core->gdtr->ptr = (uintptr_t)core->gdt;
+
+  /*
+   *  Now setup the task state segment
+   *  for the current processor.
+   */
+  core->tss = kmalloc(sizeof(struct TSSEntry));
+  kmemzero(core->tss, sizeof(struct TSSEntry));
+
+  uint64_t tss_base = (uint64_t)core->tss;
+  uint64_t k_rsp = KSTACK_START_OFFSET(core->queue_head->ctx.kstack_base);
+
+  core->tss->rsp0Low = KSTACK_LOW(k_rsp);
+  core->tss->rsp0High = KSTACK_HIGH(k_rsp);
+
+  struct TSSDescriptor* gdt_tss = (struct TSSDescriptor*)&core->gdt[9];
+  gdt_tss->seglimit = sizeof(struct TSSEntry);
+  gdt_tss->g = 0;
+  gdt_tss->baseAddrLow = tss_base & 0xFFFF;
+  gdt_tss->baseAddrMiddle = (tss_base >> 16) & 0xFF;
+  gdt_tss->baseAddrOtherMiddle = (tss_base >> 24) & 0xFF;
+  gdt_tss->baseAddrUpper = tss_base >> 32;
+  gdt_tss->avl = 0;                                           // 0 for TSS.
+  gdt_tss->dpl = 0;
+  gdt_tss->p = 1;
+  gdt_tss->reserved = 0;
+  gdt_tss->type = 0x9;
+  gdt_tss->zero = 0;
+
+  LGDT(*core->gdtr);
   load_tss();
-
   VMM_LOAD_CR3(core->queue_head->ctx.cr3);
   uint64_t rsp = core->queue_head->ctx.ustack_base + (0x1000/2);
+  uint64_t rip = (uint64_t)elf_load("initd.sys", &core->queue_head->img);
+  enter_ring3(rip, rsp);
 
   ASMV("cli; hlt");
 }
@@ -254,7 +291,7 @@ void proc_init(void) {
    *  CR3.
    */
   struct core* core = make_process();
-  printk("[INFO]: Dispatching processor with LAPIC ID %d to start InitD..\n", core->lapic_id);
+  printk("[INFO]: Dispatching Application Processor with LAPIC ID %d to start InitD..\n", core->lapic_id);
   smp_goto(core, __processor_startup_routine);
 
   __processor_idle();

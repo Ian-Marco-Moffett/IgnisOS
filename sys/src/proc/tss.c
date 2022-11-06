@@ -3,6 +3,7 @@
 #include <mm/heap.h>
 #include <lib/string.h>
 
+/*
 struct TSSEntry* tss;
 
 
@@ -31,3 +32,4 @@ void write_tss(void) {
   gdt_tss->type = 0x9;
   gdt_tss->zero = 0;
 }
+*/

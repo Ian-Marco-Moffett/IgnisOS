@@ -6,6 +6,8 @@
 #include <lib/elf.h>
 #include <mm/heap.h>
 #include <proc/perm.h>
+#include <proc/tss.h>
+#include <arch/x86/gdt.h>
 
 #define KSTACK_SIZE 0x1000
 #define KSTACK_START_OFFSET(stack_base) (stack_base+(KSTACK_SIZE/2))
@@ -66,6 +68,9 @@ struct core {
   process_t* queue_head;
   process_t* queue_base;
   process_t* running;
+  struct GDTR* gdtr;
+  struct GDTDesc* gdt;
+  struct TSSEntry* tss;
   uint8_t sleeping : 1;
   // For scheduling.
   uint32_t roll;

@@ -60,16 +60,7 @@ void _start(void) {
   printk("[INFO]: Loaded interrupt service routines.\n");
 
   init_memory_managers();
-  printk("[INFO]: Memory managers initialized.\n"); 
-  
-  write_tss();
-  printk("[INFO]: TSS initialized.\n");
-
-  load_gdt();
-  printk("[INFO]: GDT loaded.\n");
-
-  load_tss();
-  printk("[INFO]: TSS loaded.\n");
+  printk("[INFO]: Memory managers initialized.\n");  
 
   fs_init();
   printk("[INFO]: File systems initialized.\n"); 
