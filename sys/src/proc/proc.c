@@ -206,6 +206,7 @@ static void __processor_idle(void) {
 static void __processor_startup_routine(struct limine_smp_info* info) {
   load_idt();
   intr_init();
+  lapic_init();
 
   struct core* core = (struct core*)info->extra_argument;
   printk("[Processor%d]: IDT loaded, interrupts initialized.\n", info->lapic_id);
@@ -288,9 +289,29 @@ static void __processor_startup_routine(struct limine_smp_info* info) {
   ASMV("cli; hlt");
 }
 
-void task_sched(struct trapframe* tf) {
+
+void __task_sched(struct trapframe* tf) {
+  ASMV("cli; hlt");
+}
+
+
+void timer_isr(void) {
+  const size_t bsp_lapic_id = smp_get_bsp_lapic_id();
+
   for (size_t i = 0; i < core_count; ++i) {
-    if (cores[i].running != NULL && !(cores[i].sleeping)) { 
+    if (!(cores[i].sleeping) && cores[i].lapic_id != bsp_lapic_id) {
+      /*
+       *  Alright, so the boostrap processor (BSP)
+       *  has gotten IRQ 0 (Interrupt Vector 0x20).
+       *
+       *  The BSP's job is to send an interprocessor interrupt (IPI)
+       *  to all active cores that fires interrupt vector 0x81.
+       *
+       *  This vector sends the target processor
+       *  to __task_sched()
+       *
+       */
+      lapic_send_ipi(cores[i].lapic_id, 0x81);
     }
   }
 }
@@ -342,8 +363,10 @@ void proc_init(void) {
 
   log_disable_screenlog();
   smp_goto(core, __processor_startup_routine);
-
-  // ASMV("sti");
+  
+  CLI_SLEEP;
+  ASMV("sti");
+  
   __processor_idle();
   __builtin_unreachable();
 }

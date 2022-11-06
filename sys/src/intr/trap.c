@@ -17,14 +17,17 @@ uint64_t trap(struct trapframe* tf) {
   mutex_acquire(&lock);
   switch (tf->trapno) {
     case 0x20:
-      task_sched(tf);
-      return (uint64_t)&tf->rdi;
+      timer_isr();
+      break;
     case 0x80:
       if (tf->rax >= MAX_SYSCALLS)
         return 0;
 
       syscall_table[tf->rax](tf);
       break;
+    case 0x81:
+      __task_sched(tf);
+      return (uint64_t)&tf->rdi;
   }
   
   mutex_release(&lock);

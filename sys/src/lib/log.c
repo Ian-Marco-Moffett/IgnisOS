@@ -1,10 +1,9 @@
 #include <lib/log.h>
 #include <lib/string.h>
 #include <tty/console.h>
-
-#ifdef __x86_64__
+#include <arch/cpu/smp.h>
+#include <arch/x86/apic/lapic.h>
 #include <drivers/serial.h>
-#endif
 
 
 static uint8_t do_screenlog = 1;
@@ -53,15 +52,13 @@ void printk(const char* fmt, ...) {
   va_list ap;
 
   // Write to the screen if do_screenlog is 1.
-  if (do_screenlog) {
+  if (do_screenlog || lapic_read_id() == smp_get_bsp_lapic_id()) {
     va_start(ap, fmt);
     console_write(fmt, ap);
     va_end(ap);
   }
 
-#ifdef __x86_64__
   va_start(ap, fmt);
   serial_log(fmt, ap);
   va_end(ap);
-#endif
 }

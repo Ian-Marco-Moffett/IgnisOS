@@ -80,7 +80,7 @@ struct core {
 
 
 void proc_init(void);
-void task_sched(struct trapframe* tf);
+void timer_isr(void);
 void launch_exec(const char* path, pperm_t pmask);
 
 /*
@@ -97,6 +97,7 @@ process_t* get_running_process(void);
  */
 
 uint64_t fetch_rip(void);
-void __sched_init(void);
+
+void __task_sched(struct trapframe* tf);
 
 #endif
