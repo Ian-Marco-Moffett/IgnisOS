@@ -7,6 +7,9 @@
 #endif
 
 
+static uint8_t do_screenlog = 1;
+
+
 static void serial_log(const char* fmt, va_list ap) {
   if (*fmt == '\\') { 
     fmt += 2;
@@ -36,11 +39,25 @@ static void serial_log(const char* fmt, va_list ap) {
   }
 }
 
+
+void log_disable_screenlog(void) {
+  do_screenlog = 0;
+}
+
+
+void log_enable_screenlog(void) {
+  do_screenlog = 1;
+}
+
 void printk(const char* fmt, ...) {
   va_list ap;
-  va_start(ap, fmt);
-  console_write(fmt, ap);
-  va_end(ap);
+
+  // Write to the screen if do_screenlog is 1.
+  if (do_screenlog) {
+    va_start(ap, fmt);
+    console_write(fmt, ap);
+    va_end(ap);
+  }
 
 #ifdef __x86_64__
   va_start(ap, fmt);

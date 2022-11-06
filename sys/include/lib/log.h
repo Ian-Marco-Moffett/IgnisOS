@@ -9,6 +9,8 @@
 
 
 void printk(const char* fmt, ...);
+void log_disable_screenlog(void);
+void log_enable_screenlog(void);
 
 
 #endif
