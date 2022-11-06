@@ -14,6 +14,8 @@
 #include <arch/x86/apic/lapic.h>
 #include <arch/x86/gdt.h>
 #include <arch/x64/idt.h>
+#include <arch/x64/interrupts.h>
+#include <intr/irq.h>
 #include <intr/init.h>
 #include <sync/mutex.h>
 #include <lib/limine.h>
@@ -135,13 +137,7 @@ process_t* get_running_process(void) {
   return NULL;
 }
 
-
-/*
- *  Returns core that the process is on.
- *
- */
-
-static struct core* make_process(void) {
+static void make_process(struct core* core) {
   static mutex_t lock = 0;
   mutex_acquire(&lock);
 
@@ -161,7 +157,6 @@ static struct core* make_process(void) {
 
   new->ctx.kstack_base = (uint64_t)kmalloc(0x1000);
 
-  struct core* core = core_sched();
   if (core->queue_base == NULL) {
     core->queue_base = new;
     core->queue_head = new;
@@ -170,8 +165,8 @@ static struct core* make_process(void) {
   }
   
   ++core->n_running_tasks;
+  core->sleeping = 0;
   mutex_release(&lock);
-  return core;
 }
 
 
@@ -191,16 +186,7 @@ static void init_cores(void) {
     cores[i].roll = 0;
     cores[i].sleeping = i == 0 ? 0 : 1;
   }
-}
-  
-
-void task_sched(struct trapframe* tf) {
-  for (size_t i = 0; i < core_count; ++i) {
-    if (cores[i].running != NULL) {
-      cores[i].running = cores[i].running->next != NULL ? cores[i].running->next : cores[i].queue_base;
-    }
-  }
-}
+} 
 
 /*
  *  Sleepy time for a processor.
@@ -218,7 +204,11 @@ static void __processor_idle(void) {
 
 
 static void __processor_startup_routine(struct limine_smp_info* info) {
+  load_idt();
+  intr_init();
+
   struct core* core = (struct core*)info->extra_argument;
+  printk("[Processor%d]: IDT loaded, interrupts initialized.\n", info->lapic_id);
 
   /*
    *  Setup the global descriptor table
@@ -239,13 +229,26 @@ static void __processor_startup_routine(struct limine_smp_info* info) {
    */
   core->tss = kmalloc(sizeof(struct TSSEntry));
   kmemzero(core->tss, sizeof(struct TSSEntry));
-
+  
   uint64_t tss_base = (uint64_t)core->tss;
   uint64_t k_rsp = KSTACK_START_OFFSET(core->queue_head->ctx.kstack_base);
 
+  /*
+   *  Ring0 stack pointers for
+   *  switching stacks on a userland to kernelspace
+   *  switch.
+   *
+   *
+   */
+
   core->tss->rsp0Low = KSTACK_LOW(k_rsp);
   core->tss->rsp0High = KSTACK_HIGH(k_rsp);
-
+  
+  /*
+   *  Setup the TSS descriptor 
+   *  in the global descriptor table.
+   *
+   */
   struct TSSDescriptor* gdt_tss = (struct TSSDescriptor*)&core->gdt[9];
   gdt_tss->seglimit = sizeof(struct TSSEntry);
   gdt_tss->g = 0;
@@ -263,11 +266,33 @@ static void __processor_startup_routine(struct limine_smp_info* info) {
   LGDT(*core->gdtr);
   load_tss();
   VMM_LOAD_CR3(core->queue_head->ctx.cr3);
+
+  /*
+   *  Setup the stack pointer
+   *  and get the instruction pointer
+   *  from loading the binary.
+   *
+   */
+
   uint64_t rsp = core->queue_head->ctx.ustack_base + (0x1000/2);
-  uint64_t rip = (uint64_t)elf_load("initd.sys", &core->queue_head->img);
+  uint64_t rip = (uint64_t)elf_load(core->queue_base->path, &core->queue_head->img);
+
+  ASSERTF(rip != 0, "Processor with LAPIC ID %d could not\nload base process in it's queue.\n", info->lapic_id);
+
+  // Some info logging.
+  printk("[Processor%d]: GDT loaded.\n", info->lapic_id);
+  printk("[Processor%d]: TSS loaded.\n", info->lapic_id);
+
   enter_ring3(rip, rsp);
 
   ASMV("cli; hlt");
+}
+
+void task_sched(struct trapframe* tf) {
+  for (size_t i = 0; i < core_count; ++i) {
+    if (cores[i].running != NULL && !(cores[i].sleeping)) { 
+    }
+  }
 }
 
 
@@ -290,10 +315,35 @@ void proc_init(void) {
    *  Make new process and load 
    *  CR3.
    */
-  struct core* core = make_process();
+  struct core* core = core_sched();
+  make_process(core);
+
+  /*
+   *  Name the process as we will
+   *  need the path for setting it up 
+   *  and loading it's binary.
+   *
+   */
+
+  core->queue_base->path = "initd.sys";
+  
+  /*
+   *  Put some logging information 
+   *  for debugging.
+   */
+
+  printk("[INFO]: Waking up processor with LAPIC ID %d..\n", core->lapic_id);
   printk("[INFO]: Dispatching Application Processor with LAPIC ID %d to start InitD..\n", core->lapic_id);
+
+  /*
+   *  Disable video logging and
+   *  dispatch the processor.
+   */
+
+  log_disable_screenlog();
   smp_goto(core, __processor_startup_routine);
 
+  // ASMV("sti");
   __processor_idle();
   __builtin_unreachable();
 }

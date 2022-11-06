@@ -17,6 +17,7 @@
 
 typedef volatile uint16_t pid_t;
 
+
 struct trapframe {
   uint64_t rdi;
   uint64_t rsi;
@@ -54,6 +55,7 @@ struct context {
 
 typedef struct Process {
   pid_t pid;
+  const char* path;
   pperm_t pmask;          // Permissions mask.
   struct trapframe tf;
   struct context ctx;
