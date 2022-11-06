@@ -19,35 +19,31 @@ static struct limine_smp_request smp_req = {
 size_t* lapic_id_list = NULL;
 static size_t core_count = 0;
 static struct limine_smp_info** cores;
+static struct limine_smp_response* smp_resp;
+static size_t bsp_lapic_id = 0;
+static PAGEMAP start_pml4 = 0;
 
-
-static void cpu_init(struct limine_smp_info* info) { 
-  VMM_LOAD_CR3(info->extra_argument);
-
-  load_idt();
-  intr_init();
-
-  load_gdt();
-  write_tss();
-  load_tss();
-
-  while (1) {
-    ASMV("hlt");
-  }
-}
 
 size_t smp_get_core_count(void) {
   return core_count;
 }
 
 
+size_t smp_get_bsp_lapic_id(void) {
+  return bsp_lapic_id;
+}
+
+
 void smp_goto(struct core* core, void* to) {
   ASSERT(core->index < core_count, "Core ID >= core count!!!\n");
+  cores[core->index]->extra_argument = (uint64_t)core;
   cores[core->index]->goto_address = to;
 }
 
 void smp_init(void) {
-  struct limine_smp_response* smp_resp = smp_req.response;
+  start_pml4 = (PAGEMAP)vmm_make_pml4();
+  smp_resp = smp_req.response;
+  bsp_lapic_id = smp_resp->bsp_lapic_id;
   cores = smp_resp->cpus;
   core_count = smp_resp->cpu_count;
   printk(PRINTK_CLEAR "[INFO]: CPU has %d %s.\n", core_count, core_count > 1 ? "cores" : "core");
@@ -58,13 +54,5 @@ void smp_init(void) {
   for (size_t i = 0; i < smp_resp->cpu_count; ++i) {
     struct limine_smp_info* cpu = smp_resp->cpus[i];
     lapic_id_list[i] = cpu->lapic_id;
-
-    if (cpu->lapic_id != smp_resp->bsp_lapic_id) {
-      cpu->extra_argument = (uint64_t)vmm_make_pml4();
-      cpu->goto_address = cpu_init;
-      printk("[INFO]: Core with LAPIC ID %d started.\n", cpu->lapic_id);
-    } else {
-      printk("[INFO]: BSP skipped (Core with LAPIC ID %d).\n", cpu->lapic_id);
-    }
   }
 }

@@ -14,9 +14,9 @@ void register_user_int(uint8_t vector, void(*isr)(void* stackframe)) {
 }
 
 
-void register_irq(uint8_t irq, uint8_t vector, void(*isr)(void* stackframe)) {
+void register_irq(uint8_t irq, uint8_t vector, void(*isr)(void* stackframe), uint64_t extra_redentry_data) {
   set_desc(vector, isr, INT_GATE_FLAGS);
-  ioapic_set_entry(acpi_remap_irq(irq), vector);
+  ioapic_set_entry(acpi_remap_irq(irq), vector | extra_redentry_data);
 }
 
 

@@ -12,14 +12,18 @@
 #include <drivers/video/framebuffer.h>
 #include <arch/cpu/smp.h>
 #include <arch/x86/apic/lapic.h>
+#include <arch/x86/gdt.h>
+#include <arch/x64/idt.h>
+#include <intr/init.h>
 #include <sync/mutex.h>
+#include <lib/limine.h>
 
 #define PROC_U_STACK_START 0x1000
 
 extern PAGEMAP root_pagemap;
 static size_t next_pid = 1;
 static struct core* cores = NULL;
-static size_t core_count;
+static size_t core_count = 0;
 
 static inline void fork_pml4(void* frame) {
   kmemcpy((void*)((uint64_t)frame + VMM_HIGHER_HALF), (void*)root_pagemap, 0x1000);
@@ -132,18 +136,46 @@ process_t* get_running_process(void) {
 }
 
 
-void task_sched(struct trapframe* tf) {
+/*
+ *  Returns core that the process is on.
+ *
+ */
+
+static struct core* make_process(void) {
+  static mutex_t lock = 0;
+  mutex_acquire(&lock);
+
+  /*
+   *  Allocate memory for a new process
+   *  and initialize the new process.
+   * 
+   */
+  process_t* new = kmalloc(sizeof(process_t));
+  new->pid = next_pid++;
+  new->pmask = 0;
+  new->next = NULL;
+  new->ctx.cr3 = (uint64_t)vmm_make_pml4();
+  new->ctx.ustack_base = PROC_U_STACK_START;
+  new->ctx.ustack_phys_base = pmm_alloc_frame();
+  vmm_map_page((PAGEMAP*)new->ctx.cr3, new->ctx.ustack_phys_base, new->ctx.ustack_base, PTE_PRESENT | PTE_WRITABLE | PTE_USER);
+
+  new->ctx.kstack_base = (uint64_t)kmalloc(0x1000);
+
+  struct core* core = core_sched();
+  if (core->queue_base == NULL) {
+    core->queue_base = new;
+    core->queue_head = new;
+    core->running = new;
+    core->sleeping = 0;
+  }
+  
+  ++core->n_running_tasks;
+  mutex_release(&lock);
+  return core;
 }
 
-void proc_init(void) {
-  /*
-   *  Allocate memory for core list.
-   *
-   */
-  core_count = smp_get_core_count();
-  cores = kmalloc(sizeof(struct core) * core_count);
-  ASSERT(cores != NULL, "Could not allocate memory for corelist.\n");
-  
+
+static void init_cores(void) {
   /*
    *  Initialize all core
    *  descriptors.
@@ -157,18 +189,74 @@ void proc_init(void) {
     cores[i].running = NULL;
     cores[i].n_running_tasks = 0;
     cores[i].roll = 0;
+    cores[i].sleeping = i == 0 ? 0 : 1;
   }
+}
+  
+
+void task_sched(struct trapframe* tf) {
+  for (size_t i = 0; i < core_count; ++i) {
+    if (cores[i].running != NULL) {
+      cores[i].running = cores[i].running->next != NULL ? cores[i].running->next : cores[i].queue_base;
+    }
+  }
+}
+
+/*
+ *  Sleepy time for a processor.
+ *
+ *  This is a processors favorite place
+ *  to sleep in Ignis :)
+ *
+ */
+
+static void __processor_idle(void) {
+  while (1) {
+    ASMV("hlt");
+  }
+}
+
+
+static void __processor_startup_routine(struct limine_smp_info* info) {
+  struct core* core = (struct core*)info->extra_argument;
+
+  load_idt();
+  intr_init();
+
+  load_gdt();
+  write_tss();
+  load_tss();
+
+  VMM_LOAD_CR3(core->queue_head->ctx.cr3);
+  uint64_t rsp = core->queue_head->ctx.ustack_base + (0x1000/2);
+
+  ASMV("cli; hlt");
+}
+
+
+void proc_init(void) {  
+  smp_init();
+
+  /*
+   *  Allocate memory for core list.
+   *
+   */
+  core_count = smp_get_core_count();
+  cores = kmalloc(sizeof(struct core) * core_count);
+  ASSERT(cores != NULL, "Could not allocate memory for corelist.\n"); 
   
   // Just make a seed from core_count XOR rand().
   srand(core_count ^ rand());
+  init_cores();
 
-  printk("CORE CHOSEN => %d\n", core_sched()->lapic_id);
-  printk("CORE CHOSEN => %d\n", core_sched()->lapic_id);
-  printk("CORE CHOSEN => %d\n", core_sched()->lapic_id);
-  printk("CORE CHOSEN => %d\n", core_sched()->lapic_id);
-  printk("CORE CHOSEN => %d\n", core_sched()->lapic_id);
-  printk("CORE CHOSEN => %d\n", core_sched()->lapic_id);
+  /*
+   *  Make new process and load 
+   *  CR3.
+   */
+  struct core* core = make_process();
+  printk("[INFO]: Dispatching processor with LAPIC ID %d to start InitD..\n", core->lapic_id);
+  smp_goto(core, __processor_startup_routine);
 
-  ASMV("cli; hlt");
+  __processor_idle();
   __builtin_unreachable();
 }

@@ -70,6 +70,7 @@ static uint32_t read(uint16_t reg) {
   return *(volatile uint32_t*)(lapic_base + reg);
 }
 
+
 uint32_t lapic_read_id(void) {
   return read(LAPIC_ID);
 }
@@ -77,6 +78,7 @@ uint32_t lapic_read_id(void) {
 void lapic_send_eoi(void) {
   write(LAPIC_EOI, 0);
 }
+
 
 void lapic_init(void) {
   lapic_base = acpi_get_lapic_base();

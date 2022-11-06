@@ -1,5 +1,9 @@
 #include <proc/proc.h>
 #include <intr/syscall.h>
+#include <sync/mutex.h>
+
+static mutex_t lock = 0;
+
 
 /*
  *  If this returns a non-zero value
@@ -10,6 +14,7 @@
  */
 
 uint64_t trap(struct trapframe* tf) { 
+  mutex_acquire(&lock);
   switch (tf->trapno) {
     case 0x20:
       task_sched(tf);
@@ -21,6 +26,7 @@ uint64_t trap(struct trapframe* tf) {
       syscall_table[tf->rax](tf);
       break;
   }
-
+  
+  mutex_release(&lock);
   return 0;
 }

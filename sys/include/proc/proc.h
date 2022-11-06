@@ -66,6 +66,7 @@ struct core {
   process_t* queue_head;
   process_t* queue_base;
   process_t* running;
+  uint8_t sleeping : 1;
   // For scheduling.
   uint32_t roll;
 };
@@ -82,5 +83,13 @@ void launch_exec(const char* path, pperm_t pmask);
  */
 
 process_t* get_running_process(void);
+
+/*
+ *  Returns instruction pointer.
+ *
+ */
+
+uint64_t fetch_rip(void);
+void __sched_init(void);
 
 #endif

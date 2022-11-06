@@ -74,7 +74,6 @@ void _start(void) {
   fs_init();
   printk("[INFO]: File systems initialized.\n"); 
   
-  smp_init();
 #ifdef __x86_64__
   init_pit();
   printk("[INFO]: PIT initialized.\n");

@@ -1,6 +1,6 @@
 #include <drivers/pit.h>
-#include <lib/types.h>
 #include <arch/x86/io.h>
+
 
 void init_pit(void) {
   int divisor = 1193180/PIT_FREQ;
