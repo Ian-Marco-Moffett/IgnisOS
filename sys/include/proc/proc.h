@@ -37,8 +37,6 @@ struct trapframe {
   uint64_t fs;
   uint64_t gs;
 
-  // Other information.
-  uint64_t k_rsp;
   uint64_t rbp;
   uint64_t trapno;
 };
@@ -57,7 +55,7 @@ typedef struct Process {
   pid_t pid;
   const char* path;
   pperm_t pmask;          // Permissions mask.
-  struct trapframe tf;
+  uint64_t k_rsp;
   struct context ctx;
   program_image_t img;
   struct Process* next;
@@ -82,6 +80,7 @@ struct core {
 void proc_init(void);
 void timer_isr(void);
 void launch_exec(const char* path, pperm_t pmask);
+struct core* proc_get_current_core(void);
 
 /*
  *  Returns the currently running process
@@ -98,6 +97,7 @@ process_t* get_running_process(void);
 
 uint64_t fetch_rip(void);
 
-void __task_sched(struct trapframe* tf);
+uint64_t __task_sched(uint64_t k_rsp);
+void __system_halt(void* stackframe);
 
 #endif

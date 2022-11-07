@@ -1,14 +1,34 @@
 #include <intr/exceptions.h>
 #include <arch/x64/interrupts.h>
+#include <arch/x86/apic/lapic.h>
 #include <lib/log.h>
 #include <lib/types.h>
 #include <proc/proc.h>
 #include <lib/panic.h>
 #include <mm/vmm.h>
 
-#define INTR_END    \
-  ASMV("cli; hlt"); \
+#define INTR_END              \
+  lapic_send_ipi_all(0x81);   \
+  ASMV("cli; hlt");           \
   __builtin_unreachable();
+
+typedef struct {
+  uint64_t error_code;
+  uint64_t rip;
+  uint64_t cs;
+  uint64_t rflags;
+  uint64_t rsp;
+  uint64_t ss;
+} stackframe_t;
+
+
+static void dump_state(void* stackframe) {
+  stackframe_t* frame = stackframe;
+  printk(PRINTK_PANIC "-- Begin dump of exception stackframe --\n");
+  printk(PRINTK_PANIC "ERROR_CODE=%x RIP=%x\n", frame->error_code, frame->rip);
+  printk(PRINTK_PANIC "RFLAGS=%x RSP=%x\n", frame->rflags, frame->rsp);
+  printk(PRINTK_PANIC "       SS=%x\n", frame->ss);
+}
 
 
 
@@ -86,6 +106,7 @@ _isr void __vec12(void* stackframe) {
 _isr void __vec13(void* stackframe) {
   __asm__ __volatile__("cli");
   printk(PRINTK_PANIC "kpanic: Privilege violation (PID %d).\n", 0b0);
+  dump_state(stackframe);
   INTR_END;
 }
 
@@ -95,6 +116,7 @@ _isr void __vec14(void* stackframe) {
   uint64_t cr2;
   ASMV("mov %%cr2, %0" : "=r" (cr2));
   printk(PRINTK_PANIC "kpanic: Memory access violation at %x (PID %d)\n", cr2, 0b0);
+  dump_state(stackframe);
   INTR_END;
 }
 

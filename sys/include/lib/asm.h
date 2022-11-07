@@ -6,10 +6,10 @@
 #define _packed __attribute__((packed))
 #define _noreturn __attribute__((noreturn))
 #define _naked __attribute__((naked))
-#define _isr _noreturn
+#define _isr __attribute__((interrupt))
 
 #define CLI_SLEEP \
-  for (unsigned long long i = 0; i < 1000000; ++i) {             \
+  for (unsigned long long i = 0; i < 900000; ++i) {                 \
     ASMV("cli");                                                      \
   }
 

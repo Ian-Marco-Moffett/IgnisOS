@@ -82,7 +82,7 @@ void lapic_send_eoi(void) {
 
 void lapic_send_ipi_all(uint8_t vector) {
   while (read(LAPIC_VER) & ICR_SEND_PENDING);
-  uint32_t control = vector | ICR_ASSERT | ICR_ALL_EXCLUDING_SELF;
+  uint32_t control = vector | ICR_ASSERT | ICR_ALL_INCLUDING_SELF;
   write(LAPIC_ICRLO, control);
 }
 

@@ -8,7 +8,7 @@ void lapic_init(void);
 void lapic_send_eoi(void);
 uint32_t lapic_read_id(void);
 
-// Sends IPI to all processors except self.
+// Sends IPI to all processors.
 void lapic_send_ipi_all(uint8_t vector);
 
 // Sends IPI to specific processor.

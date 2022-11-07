@@ -26,11 +26,6 @@ __irq0_isr:
   pop rax
   pop rbp
   
-  mov qword [saved_rsp], rsp
   push 0x20
   push rbp
-  push qword [saved_rsp]
   jmp trap_entry
-
-section .data
-saved_rsp: dq 0

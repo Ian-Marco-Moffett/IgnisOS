@@ -137,6 +137,7 @@ process_t* get_running_process(void) {
   return NULL;
 }
 
+
 static void make_process(struct core* core) {
   static mutex_t lock = 0;
   mutex_acquire(&lock);
@@ -204,11 +205,13 @@ static void __processor_idle(void) {
 
 
 static void __processor_startup_routine(struct limine_smp_info* info) {
+  struct core* core = (struct core*)info->extra_argument;
+  VMM_LOAD_CR3(core->queue_head->ctx.cr3);
+
   load_idt();
   intr_init();
   lapic_init();
 
-  struct core* core = (struct core*)info->extra_argument;
   printk("[Processor%d]: IDT loaded, interrupts initialized.\n", info->lapic_id);
 
   /*
@@ -266,7 +269,6 @@ static void __processor_startup_routine(struct limine_smp_info* info) {
 
   LGDT(*core->gdtr);
   load_tss();
-  VMM_LOAD_CR3(core->queue_head->ctx.cr3);
 
   /*
    *  Setup the stack pointer
@@ -283,14 +285,47 @@ static void __processor_startup_routine(struct limine_smp_info* info) {
   // Some info logging.
   printk("[Processor%d]: GDT loaded.\n", info->lapic_id);
   printk("[Processor%d]: TSS loaded.\n", info->lapic_id);
-
   enter_ring3(rip, rsp);
 
   ASMV("cli; hlt");
 }
 
 
-void __task_sched(struct trapframe* tf) {
+static struct core* current_core = NULL;
+uint64_t __task_sched(uint64_t k_rsp) {
+
+  /*
+   *  Save the trapframe into the running process's copy
+   *  of it so we can restore the state later.
+   *
+   */
+  
+  current_core->queue_base->k_rsp = 0;
+
+  /*
+   *  Alright, now it is time
+   *  to switch to the next process.
+   */
+
+  if (current_core->running->next != NULL)
+    current_core->running = current_core->running->next;
+  else
+    current_core->running = current_core->queue_base;
+
+  /*
+   *  Now we must restore to this
+   *  process's state.
+   *
+   */
+
+  current_core->tss->rsp0Low = KSTACK_LOW(current_core->running->ctx.kstack_base);
+  current_core->tss->rsp0High = KSTACK_HIGH(current_core->running->ctx.kstack_base);
+  VMM_LOAD_CR3(current_core->running->ctx.cr3);
+  return current_core->running->k_rsp;
+}
+
+
+__attribute__((naked)) void __system_halt(void* stackframe) {
   ASMV("cli; hlt");
 }
 
@@ -311,6 +346,8 @@ void timer_isr(void) {
        *  to __task_sched()
        *
        */
+      
+      current_core = &cores[i];
       lapic_send_ipi(cores[i].lapic_id, 0x81);
     }
   }
@@ -363,8 +400,11 @@ void proc_init(void) {
 
   log_disable_screenlog();
   smp_goto(core, __processor_startup_routine);
-  
-  CLI_SLEEP;
+ 
+  for (uint32_t i = 0; i < 20; ++i) {
+    CLI_SLEEP;
+  }
+
   ASMV("sti");
   
   __processor_idle();

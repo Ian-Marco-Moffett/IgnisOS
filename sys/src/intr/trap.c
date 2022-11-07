@@ -14,6 +14,8 @@ static mutex_t lock = 0;
  */
 
 uint64_t trap(struct trapframe* tf) { 
+  uint64_t ret = 0;
+  
   mutex_acquire(&lock);
   switch (tf->trapno) {
     case 0x20:
@@ -26,10 +28,9 @@ uint64_t trap(struct trapframe* tf) {
       syscall_table[tf->rax](tf);
       break;
     case 0x81:
-      __task_sched(tf);
-      return (uint64_t)&tf->rdi;
+      ret = __task_sched((uint64_t)tf);
   }
   
   mutex_release(&lock);
-  return 0;
+  return ret;
 }

@@ -50,7 +50,6 @@ trap_entry:
   pop r15
   pop fs
   pop gs
-  add rsp, 8
   pop rbp
   add rsp, 8
   iretq

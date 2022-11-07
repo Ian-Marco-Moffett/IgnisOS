@@ -28,5 +28,6 @@ void intr_init(void) {
 
   register_irq(0, 0x20, __irq0_isr, timer_redentry_data);
   register_int(0x81, __vec_0x81);
+  register_int(0x82, __system_halt);
   register_user_int(0x80, syscall_entry);
 }
