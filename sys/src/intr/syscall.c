@@ -43,15 +43,13 @@ static void sys_conout(struct trapframe* tf) {
   if (p == NULL)
     return;
 
-  /*
-  if ((uint64_t)str > current_core->running->img.prog_end) {
+  if ((uint64_t)str > p->img.prog_end) {
     return;
   }
 
-  if ((uint64_t)str < current_core->running->img.prog_start) {
+  if ((uint64_t)str < p->img.prog_start) {
     return;
   }
-  */
 
   va_list ap;
   console_write(str, ap);
