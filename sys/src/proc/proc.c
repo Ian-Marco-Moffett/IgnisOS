@@ -163,7 +163,6 @@ static void make_process(struct core* core) {
     core->queue_base = new;
     core->queue_head = new;
     core->running = new;
-    core->sleeping = 0;
   }
   
   ++core->n_running_tasks;
@@ -304,8 +303,8 @@ static void __processor_startup_routine(struct limine_smp_info* info) {
 
 
 static struct core* current_core = NULL;
+__attribute__((naked)) void trap_sched_exit(uint64_t rsp);
 uint64_t __task_sched(uint64_t k_rsp) {
-
   /*
    *  Save the trapframe into the running process's copy
    *  of it so we can restore the state later.
@@ -330,10 +329,10 @@ uint64_t __task_sched(uint64_t k_rsp) {
    *
    */
 
-  current_core->tss->rsp0Low = KSTACK_LOW(current_core->running->ctx.kstack_base);
-  current_core->tss->rsp0High = KSTACK_HIGH(current_core->running->ctx.kstack_base);
+  current_core->tss->rsp0Low = KSTACK_LOW(current_core->running->ctx.kstack_base + (0x1000/2));
+  current_core->tss->rsp0High = KSTACK_HIGH(current_core->running->ctx.kstack_base + (0x1000/2));
   VMM_LOAD_CR3(current_core->running->ctx.cr3);
-  current_core->busy = 0;
+  lapic_send_eoi();
   return current_core->running->k_rsp;
 }
 
@@ -346,8 +345,8 @@ __attribute__((naked)) void __system_halt(void* stackframe) {
 void timer_isr(void) {
   const size_t bsp_lapic_id = smp_get_bsp_lapic_id();
 
-  for (size_t i = 0; i < core_count; ++i) {
-    if (!(cores[i].sleeping) && cores[i].lapic_id != bsp_lapic_id && !(cores[i].busy)) {
+  for (size_t i = 0; i < core_count; ++i) { 
+    if (!(cores[i].sleeping) && cores[i].lapic_id != bsp_lapic_id) {
       /*
        *  Alright, so the boostrap processor (BSP)
        *  has gotten IRQ 0 (Interrupt Vector 0x20).
@@ -359,7 +358,6 @@ void timer_isr(void) {
        *  to __task_sched()
        *
        */
-      cores[i].busy = 1;
       current_core = &cores[i];
       lapic_send_ipi(cores[i].lapic_id, 0x81);
     }

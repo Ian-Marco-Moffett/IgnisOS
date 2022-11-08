@@ -1,4 +1,5 @@
 global trap_entry
+global trap_sched_exit
 
 extern trap
 
@@ -53,3 +54,7 @@ trap_entry:
   pop rbp
   add rsp, 8
   iretq
+
+trap_sched_exit:
+  mov rsp, rdi
+  jmp trap_entry.trap_end

@@ -40,6 +40,7 @@ static void sys_conout(struct trapframe* tf) {
   const char* str = (const char*)tf->rbx;
   process_t* p = get_running_process();
 
+  /*
   if (p == NULL)
     return;
 
@@ -50,6 +51,7 @@ static void sys_conout(struct trapframe* tf) {
   if ((uint64_t)str < p->img.prog_start) {
     return;
   }
+  */
 
   va_list ap;
   console_write(str, ap);
