@@ -204,33 +204,17 @@ static void __processor_idle(void) {
 }
 
 
-static void __processor_startup_routine(struct limine_smp_info* info) {
-  struct core* core = (struct core*)info->extra_argument;
-  VMM_LOAD_CR3(core->queue_head->ctx.cr3);
-
-  load_idt();
-  intr_init();
-  lapic_init();
-
-  printk("[Processor%d]: IDT loaded, interrupts initialized.\n", info->lapic_id);
-
-  /*
-   *  Setup the global descriptor table
-   *  for the current processor.
-   *
-   */
-
+static void __processor_init_gdt(struct core* core) {
   size_t gdt_size = sizeof(struct GDTDesc) * 11;
   core->gdt = kmalloc(gdt_size);
   core->gdtr = kmalloc(sizeof(struct GDTR));
   kmemcpy((uint8_t*)core->gdt, (uint8_t*)base_gdt, gdt_size);
   core->gdtr->limit = gdt_size;
   core->gdtr->ptr = (uintptr_t)core->gdt;
+}
 
-  /*
-   *  Now setup the task state segment
-   *  for the current processor.
-   */
+
+static void __processor_init_tss(struct core* core) {
   core->tss = kmalloc(sizeof(struct TSSEntry));
   kmemzero(core->tss, sizeof(struct TSSEntry));
   
@@ -269,6 +253,33 @@ static void __processor_startup_routine(struct limine_smp_info* info) {
 
   LGDT(*core->gdtr);
   load_tss();
+}
+
+
+static void __processor_startup_routine(struct limine_smp_info* info) {
+  struct core* core = (struct core*)info->extra_argument;
+  VMM_LOAD_CR3(core->queue_head->ctx.cr3);
+
+  load_idt();
+  intr_init();
+  lapic_init();
+
+  printk("[Processor%d]: IDT loaded, interrupts initialized.\n", info->lapic_id);
+
+  /*
+   *  Setup the global descriptor table
+   *  for the current processor.
+   *
+   */
+
+  __processor_init_gdt(core);
+
+  /*
+   *  Now setup the task state segment
+   *  for the current processor.
+   */
+
+  __processor_init_tss(core);
 
   /*
    *  Setup the stack pointer
@@ -340,7 +351,7 @@ void timer_isr(void) {
        *  has gotten IRQ 0 (Interrupt Vector 0x20).
        *
        *  The BSP's job is to send an interprocessor interrupt (IPI)
-       *  to all active cores that fires interrupt vector 0x81.
+       *  to all active cores, that fires interrupt vector 0x81.
        *
        *  This vector sends the target processor
        *  to __task_sched()
