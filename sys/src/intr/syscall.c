@@ -37,21 +37,10 @@ const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
  */
 
 static void sys_conout(struct trapframe* tf) {
-  // const char* str = (const char*)tf->rbx;
-  
-  /*
-   *  Deny if it is out of program range.
-   *
-   */
-  
-  /*
-  if ((uint64_t)str < running_process->img.prog_start || ((uint64_t)str > running_process->img.prog_end)) {
-    return;
-  }
+  const char* str = (const char*)tf->rbx; 
 
   va_list ap;
   console_write(str, ap);
-  */
 }
 
 
