@@ -37,7 +37,21 @@ const uint16_t g_SYSCALL_COUNT = MAX_SYSCALLS;
  */
 
 static void sys_conout(struct trapframe* tf) {
-  const char* str = (const char*)tf->rbx; 
+  const char* str = (const char*)tf->rbx;
+  process_t* p = get_running_process();
+
+  if (p == NULL)
+    return;
+
+  /*
+  if ((uint64_t)str > current_core->running->img.prog_end) {
+    return;
+  }
+
+  if ((uint64_t)str < current_core->running->img.prog_start) {
+    return;
+  }
+  */
 
   va_list ap;
   console_write(str, ap);

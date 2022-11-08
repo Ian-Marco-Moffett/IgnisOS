@@ -72,6 +72,7 @@ struct core {
   struct GDTDesc* gdt;
   struct TSSEntry* tss;
   uint8_t sleeping : 1;
+  uint8_t busy : 1;
   // For scheduling.
   uint32_t roll;
 };

@@ -21,6 +21,7 @@
 #include <lib/limine.h>
 
 #define PROC_U_STACK_START 0x1000
+#define CORE_DESCRIPTOR_LOC 0x31000
 
 extern PAGEMAP root_pagemap;
 static size_t next_pid = 1;
@@ -311,7 +312,7 @@ uint64_t __task_sched(uint64_t k_rsp) {
    *
    */
   
-  current_core->queue_base->k_rsp = 0;
+  current_core->running->k_rsp = k_rsp;
 
   /*
    *  Alright, now it is time
@@ -332,6 +333,7 @@ uint64_t __task_sched(uint64_t k_rsp) {
   current_core->tss->rsp0Low = KSTACK_LOW(current_core->running->ctx.kstack_base);
   current_core->tss->rsp0High = KSTACK_HIGH(current_core->running->ctx.kstack_base);
   VMM_LOAD_CR3(current_core->running->ctx.cr3);
+  current_core->busy = 0;
   return current_core->running->k_rsp;
 }
 
@@ -345,7 +347,7 @@ void timer_isr(void) {
   const size_t bsp_lapic_id = smp_get_bsp_lapic_id();
 
   for (size_t i = 0; i < core_count; ++i) {
-    if (!(cores[i].sleeping) && cores[i].lapic_id != bsp_lapic_id) {
+    if (!(cores[i].sleeping) && cores[i].lapic_id != bsp_lapic_id && !(cores[i].busy)) {
       /*
        *  Alright, so the boostrap processor (BSP)
        *  has gotten IRQ 0 (Interrupt Vector 0x20).
@@ -357,7 +359,7 @@ void timer_isr(void) {
        *  to __task_sched()
        *
        */
-      
+      cores[i].busy = 1;
       current_core = &cores[i];
       lapic_send_ipi(cores[i].lapic_id, 0x81);
     }

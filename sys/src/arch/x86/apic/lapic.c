@@ -72,7 +72,7 @@ static uint32_t read(uint16_t reg) {
 
 
 uint32_t lapic_read_id(void) {
-  return read(LAPIC_ID);
+  return read(LAPIC_ID) >> 24;
 }
 
 void lapic_send_eoi(void) {
