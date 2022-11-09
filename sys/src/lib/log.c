@@ -4,6 +4,7 @@
 #include <arch/cpu/smp.h>
 #include <arch/x86/apic/lapic.h>
 #include <drivers/serial.h>
+#include <sync/mutex.h>
 
 
 static uint8_t do_screenlog = 1;
@@ -49,6 +50,8 @@ void log_enable_screenlog(void) {
 }
 
 void printk(const char* fmt, ...) {
+  static uint8_t lock = 0;
+  mutex_acquire(&lock);
   va_list ap;
 
   // Write to the screen if do_screenlog is 1.
@@ -61,4 +64,5 @@ void printk(const char* fmt, ...) {
   va_start(ap, fmt);
   serial_log(fmt, ap);
   va_end(ap);
+  mutex_release(&lock);
 }

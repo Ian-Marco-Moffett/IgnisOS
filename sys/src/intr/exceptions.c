@@ -23,6 +23,8 @@ typedef struct {
 
 
 static void dump_state(void* stackframe) {
+  struct core* core = proc_get_current_core();
+  printk("Exception caused by process with PID of %d on processor with LAPIC ID of %d\n", core->running->pid, core->lapic_id);
   stackframe_t* frame = stackframe;
   printk(PRINTK_PANIC "-- Begin dump of exception stackframe --\n");
   printk(PRINTK_PANIC "ERROR_CODE=%x RIP=%x\n", frame->error_code, frame->rip);
@@ -34,48 +36,48 @@ static void dump_state(void* stackframe) {
 
 _isr void __vec0(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: Divison by zero (PID %d)\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: Divison by zero\n");
   INTR_END;
 }
 
 
 _isr void __vec1(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: Debug exception (PID %d).\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: Debug exception\n");
   INTR_END;
 }
 
 
 _isr void __vec3(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: Breakpoint (PID %d).\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: Breakpoint\n");
   INTR_END;
 }
 
 
 _isr void __vec4(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: Overflow (PID %d).\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: Overflow\n");
   INTR_END;
 }
 
 
 _isr void __vec5(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: BOUND range exceeded (PID %d).\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: BOUND range exceeded\n");
   INTR_END;
 }
 
 
 _isr void __vec6(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: Undefined opcode (PID %d).\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: Undefined opcode\n");
   INTR_END;
 }
 
 _isr void __vec8(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: Double fault (PID %d)\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: Double fault\n");
   kpanic();
   ASMV("cli; hlt");
   __builtin_unreachable();
@@ -84,28 +86,28 @@ _isr void __vec8(void* stackframe) {
 
 _isr void __vec10(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: Invalid TSS (PID %d)\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: Invalid TSS\n");
   INTR_END;
 }
 
 
 _isr void __vec11(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: Segment not present (PID %d).\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: Segment not present\n");
   INTR_END;
 }
 
 
 _isr void __vec12(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: Stack segment fault (PID %d).\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: Stack segment fault\n");
   INTR_END;
 }
 
 
 _isr void __vec13(void* stackframe) {
   __asm__ __volatile__("cli");
-  printk(PRINTK_PANIC "kpanic: Privilege violation (PID %d).\n", 0b0);
+  printk(PRINTK_PANIC "kpanic: Privilege violation\n");
   dump_state(stackframe);
   INTR_END;
 }
@@ -113,9 +115,11 @@ _isr void __vec13(void* stackframe) {
 
 _isr void __vec14(void* stackframe) {
   __asm__ __volatile__("cli");
+  lapic_send_ipi_others(0x82);
   uint64_t cr2;
   ASMV("mov %%cr2, %0" : "=r" (cr2));
-  printk(PRINTK_PANIC "kpanic: Memory access violation at %x (PID %d)\n", cr2, 0b0);
+
+  printk(PRINTK_PANIC "kpanic: Memory access violation at %x\n", cr2);
   dump_state(stackframe);
   INTR_END;
 }
