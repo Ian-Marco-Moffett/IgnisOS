@@ -122,6 +122,23 @@ static struct core* core_sched(void) {
 }
 
 
+struct core* proc_get_current_core(void) {
+  static mutex_t lock = 0;
+  mutex_acquire(&lock);
+
+  uint32_t lapic_id = lapic_read_id();
+  for (size_t i = 0; i < core_count; ++i) {
+    if (cores[i].lapic_id == lapic_id) {
+      mutex_release(&lock);
+      return &cores[i];
+    }
+  }
+  
+  mutex_release(&lock);
+  return NULL;
+}
+
+
 process_t* get_running_process(void) {
   static mutex_t lock = 0;
   mutex_acquire(&lock);
@@ -163,6 +180,9 @@ static void make_process(struct core* core) {
     core->queue_base = new;
     core->queue_head = new;
     core->running = new;
+  } else {
+    core->queue_head->next = new;
+    core->queue_head = new;
   }
   
   ++core->n_running_tasks;
@@ -304,14 +324,15 @@ static void __processor_startup_routine(struct limine_smp_info* info) {
 
 static struct core* current_core = NULL;
 __attribute__((naked)) void trap_sched_exit(uint64_t rsp);
-uint64_t __task_sched(uint64_t k_rsp) {
+uint64_t __task_sched(uint64_t k_rsp, uint8_t yield) {
   /*
    *  Save the trapframe into the running process's copy
    *  of it so we can restore the state later.
    *
    */
   
-  current_core->running->k_rsp = k_rsp;
+  if (!(yield))
+    current_core->running->k_rsp = k_rsp;
 
   /*
    *  Alright, now it is time
@@ -363,6 +384,75 @@ void timer_isr(void) {
     }
   }
 }
+
+
+static void setup_new_task_stack(uint64_t* k_rsp, uint64_t rip, uint64_t u_rsp) {
+    *--k_rsp = 0x40 | 3;      // SS.
+    *--k_rsp = u_rsp;         // RSP.
+    *--k_rsp = 0x202;         // RFLAGS.
+    *--k_rsp = 0x38 | 3;      // CS.
+    *--k_rsp = rip;           // RIP.
+    *--k_rsp = 0;             // TRAPNO.
+    *--k_rsp = u_rsp;         // RBP.
+    *--k_rsp = 0x40 | 3;      // GS.
+    *--k_rsp = 0x40 | 3;      // FS.
+    *--k_rsp = 0;             // R15.
+    *--k_rsp = 0;             // R14.
+    *--k_rsp = 0;             // R13.
+    *--k_rsp = 0;             // R12.
+    *--k_rsp = 0;             // R10.
+    *--k_rsp = 0;             // R9.
+    *--k_rsp = 0;             // R8.
+    *--k_rsp = 0;             // RAX.
+    *--k_rsp = 0;             // RCX.
+    *--k_rsp = 0;             // RDX.
+    *--k_rsp = 0;             // RBX.
+    *--k_rsp = 0;             // RSI.
+    *--k_rsp = 0;             // RDI.
+}
+
+
+void launch_exec(const char* path, pperm_t pmask) {
+  /*
+   *  Schedule a processor
+   *  for this new task.
+   *
+   */
+
+  static uint8_t lock = 0;
+  mutex_acquire(&lock);
+
+  struct core* core = core_sched();
+  uint8_t is_sleeping = core->sleeping == 1;
+
+  make_process(core);
+
+  core->queue_head->path = path;
+  printk("[%s()]: Dispatching Application Processor with LAPIC of %d for new task..\n", __func__, core->lapic_id);
+
+  /*
+   *  If processor is sleeping
+   *  then we must wake it up
+   *  and initialize it.
+   *
+   */
+  if (is_sleeping) {
+    printk("[%s()]: Waking up Application Processor with LAPIC of %d..\n", __func__, core->lapic_id);
+    smp_goto(core, __processor_startup_routine);
+  } else { 
+    uint64_t rsp = core->queue_head->ctx.ustack_base + (0x1000/2);
+    uint64_t rip = (uint64_t)elf_load(core->queue_head->path, &core->queue_head->img);
+
+    uint64_t* k_rsp = (uint64_t*)(core->queue_head->ctx.kstack_base + (0x1000/2)); 
+    setup_new_task_stack(k_rsp, rip, rsp);
+  }
+  
+  mutex_release(&lock);
+
+  // Yield.
+  ASMV("int $0x83");
+}
+
 
 
 void proc_init(void) {  
