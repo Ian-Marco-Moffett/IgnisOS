@@ -28,7 +28,11 @@ uint64_t trap(struct trapframe* tf) {
       syscall_table[tf->rax](tf);
       break;
     case 0x81:
-      ret = __task_sched((uint64_t)tf);
+      __task_sched((uint64_t)tf, 0);
+      break;
+    case 0x83:
+      __task_sched((uint64_t)tf, 1);
+      break;
   }
   
   mutex_release(&lock);
