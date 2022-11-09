@@ -1,6 +1,9 @@
 # IgnisOS
 
-## A new Unix standard!
+## Revamped version
+https://github.com/Qnixx/src
+
+## Docs.
 
 See share/docs/building.md for build instructions
 See share/docs/log.md for info about the log file.
