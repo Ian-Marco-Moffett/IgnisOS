@@ -87,6 +87,13 @@ void lapic_send_ipi_all(uint8_t vector) {
 }
 
 
+void lapic_send_ipi_others(uint8_t vector) {
+  while (read(LAPIC_VER) & ICR_SEND_PENDING);
+  uint32_t control = vector | ICR_ASSERT | ICR_ALL_EXCLUDING_SELF;
+  write(LAPIC_ICRLO, control);
+}
+
+
 void lapic_send_ipi(uint8_t apic_id, uint8_t vector) {
   while (read(LAPIC_VER) & ICR_SEND_PENDING);
   write(LAPIC_ICRHI, (uint32_t)apic_id << 24);
