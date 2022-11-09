@@ -40,7 +40,6 @@ static void sys_conout(struct trapframe* tf) {
   const char* str = (const char*)tf->rbx;
   process_t* p = get_running_process();
 
-  /*
   if (p == NULL)
     return;
 
@@ -51,7 +50,6 @@ static void sys_conout(struct trapframe* tf) {
   if ((uint64_t)str < p->img.prog_start) {
     return;
   }
-  */
 
   va_list ap;
   console_write(str, ap);
@@ -88,12 +86,12 @@ static void sys_ioctl(struct trapframe* tf) {
  */
 
 static void sys_launch(struct trapframe* tf) {
-  // launch_exec((const char*)tf->rbx, tf->rcx);
+  launch_exec((const char*)tf->rbx, tf->rcx);
 }
 
 
 void(*syscall_table[MAX_SYSCALLS])(struct trapframe* tf) = {
   sys_conout,       // 0x0.
   sys_ioctl,        // 0x1.
-  // sys_launch,       // 0x2.
+  sys_launch,       // 0x2.
 };
