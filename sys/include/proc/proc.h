@@ -72,7 +72,6 @@ struct core {
   struct GDTDesc* gdt;
   struct TSSEntry* tss;
   uint8_t sleeping : 1;
-  uint8_t busy : 1;
   // For scheduling.
   uint32_t roll;
 };
@@ -98,7 +97,7 @@ process_t* get_running_process(void);
 
 uint64_t fetch_rip(void);
 
-uint64_t __task_sched(uint64_t k_rsp);
+uint64_t __task_sched(uint64_t k_rsp, uint8_t yield);
 void __system_halt(void* stackframe);
 
 #endif
